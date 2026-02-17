@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- REPLACE: Page title and city name -->
+    <title>CityVotes - {CityName} City Council Voting Records</title>
+    <meta name="description" content="Track {CityName} City Council voting records, member alignment, and civic transparency data.">
+
+    <!-- REPLACE: Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="CityVotes - {CityName} City Council Voting Records">
+    <meta property="og:description" content="Track {CityName} City Council voting records, member alignment, and civic transparency data.">
+    <meta property="og:site_name" content="CityVotes">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- THEME: City-specific colors and styles -->
+    <link href="css/theme.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Skip Navigation (accessibility) -->
+    <a href="#main-content" class="visually-hidden-focusable skip-link">Skip to main content</a>
+
+    <!--
+    ================================================================
+    NAVIGATION BAR
+    Shared across all pages. Copy this block to every page.
+    REPLACE: {AppName}, {CityName}, active nav-link
+    ================================================================
+    -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-city-primary">
+        <div class="container">
+            <!-- REPLACE: App name -->
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-vote-yea me-2"></i>CityVotes
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <!-- Set class="nav-link active" on the current page -->
+                    <li class="nav-item">
+                        <a class="nav-link active" href="index.html">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="council.html">
+                            <i class="fas fa-users me-1"></i>Council
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="meetings.html">
+                            <i class="fas fa-calendar me-1"></i>Meetings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="votes.html">
+                            <i class="fas fa-check-square me-1"></i>Votes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="agenda-search.html">
+                            <i class="fas fa-search me-1"></i>Search
+                        </a>
+                    </li>
+                </ul>
+                <a href="about.html" class="btn btn-outline-light btn-sm me-3">
+                    <i class="fas fa-question-circle me-1"></i>Help
+                </a>
+                <!-- REPLACE: City name -->
+                <span class="navbar-text text-city-accent">
+                    <i class="fas fa-map-marker-alt me-1"></i>{CityName}
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <!--
+    ================================================================
+    HERO SECTION
+    Home page only. Gradient background using city primary colors.
+    REPLACE: {CityName}
+    ================================================================
+    -->
+    <header class="hero-section py-5">
+        <div class="container text-center">
+            <h1 class="display-4 mb-3">
+                <i class="fas fa-landmark me-3"></i>{CityName} City Council
+            </h1>
+            <p class="lead text-muted">Voting Records & Transparency</p>
+        </div>
+    </header>
+
+    <!--
+    ================================================================
+    STATISTICS BAR
+    Layout: 4 equal columns (col-md-3 col-6)
+    Data: stats.json -> total_votes, total_meetings, pass_rate, unanimous_rate
+    ================================================================
+    -->
+    <section class="py-4 bg-light">
+        <div class="container">
+            <div class="row text-center" id="statsRow">
+                <!-- KPI Card 1: Total Votes -->
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalVotes">--</div>
+                        <div class="stat-label">Total Votes</div>
+                    </div>
+                </div>
+                <!-- KPI Card 2: Meetings -->
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalMeetings">--</div>
+                        <div class="stat-label">Meetings</div>
+                    </div>
+                </div>
+                <!-- KPI Card 3: Pass Rate -->
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-value" id="passRate">--%</div>
+                        <div class="stat-label">Pass Rate</div>
+                    </div>
+                </div>
+                <!-- KPI Card 4: Unanimous Rate -->
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-value" id="unanimousRate">--%</div>
+                        <div class="stat-label">Unanimous</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main id="main-content" class="container my-5">
+
+        <!--
+        ================================================================
+        COUNCIL MEMBERS GRID
+        Layout: 4 columns desktop (col-lg-3), 2 tablet (col-md-4 col-sm-6)
+        Data: council.json -> members[]
+        Each card: avatar, name, position, badge, aye%, participation%
+        ================================================================
+        -->
+        <section class="mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-users me-2"></i>City Council</h2>
+                <a href="council.html" class="btn btn-outline-primary">View All</a>
+            </div>
+            <div class="row" id="councilGrid">
+                <div class="col-12 text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!--
+        ================================================================
+        RECENT MEETINGS LIST
+        Layout: list-group, limit 5 items
+        Data: meetings.json -> first 5 sorted by date desc
+        Each item: date, type badge, vote count, document badges
+        ================================================================
+        -->
+        <section class="mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-calendar me-2"></i>Recent Meetings</h2>
+                <a href="meetings.html" class="btn btn-outline-primary">View All</a>
+            </div>
+            <div class="list-group" id="recentMeetings">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!--
+        ================================================================
+        VOTING ALIGNMENT
+        Layout: 2 columns (col-md-6) side by side
+        Data: alignment.json -> most_aligned[], least_aligned[]
+        Left card (green): Top 3 most aligned pairs
+        Right card (yellow): Top 3 least aligned pairs
+        ================================================================
+        -->
+        <section class="mb-5">
+            <h2 class="mb-4"><i class="fas fa-handshake me-2"></i>Voting Alignment</h2>
+            <div class="row">
+                <!-- Most Aligned Card -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-success text-white">
+                            <i class="fas fa-thumbs-up me-2"></i>Most Aligned
+                        </div>
+                        <div class="card-body" id="mostAligned">
+                            <div class="text-center py-3">
+                                <div class="spinner-border text-success" role="status"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Least Aligned Card -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-warning text-dark">
+                            <i class="fas fa-balance-scale me-2"></i>Least Aligned
+                        </div>
+                        <div class="card-body" id="leastAligned">
+                            <div class="text-center py-3">
+                                <div class="spinner-border text-warning" role="status"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!--
+    ================================================================
+    FOOTER
+    Shared across all pages. Copy this block to every page.
+    REPLACE: {AppName}, {CityName}
+    ================================================================
+    -->
+    <footer class="bg-dark text-light py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <!-- REPLACE: App and city name -->
+                    <h6>CityVotes - {CityName} Voting Transparency</h6>
+                    <p class="text-muted mb-0">
+                        Data sourced from official {CityName} city council meeting records.
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <p class="mb-0">Want a different city? <a href="contact.html" class="text-city-accent">Contact us</a></p>
+                </div>
+                <div class="col-md-2 text-end">
+                    <span class="text-muted" id="dateRange">-- Data</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Static Data API -->
+    <script src="js/api.js"></script>
+
+    <!--
+    ================================================================
+    PAGE SCRIPT
+    Loads: stats, council, meetings, alignment in parallel
+    ================================================================
+    -->
+    <script>
+    document.addEventListener('DOMContentLoaded', async function() {
+        await Promise.all([
+            loadStats(),
+            loadCouncil(),
+            loadRecentMeetings(),
+            loadAlignment()
+        ]);
+    });
+
+    /* --- STATS BAR --- */
+    async function loadStats() {
+        try {
+            const data = await CityVotesAPI.getStats();
+            if (data.success) {
+                document.getElementById('totalVotes').textContent = data.stats.total_votes.toLocaleString();
+                document.getElementById('totalMeetings').textContent = data.stats.total_meetings;
+                document.getElementById('passRate').textContent = data.stats.pass_rate + '%';
+                document.getElementById('unanimousRate').textContent = data.stats.unanimous_rate + '%';
+                if (data.stats.date_range.start && data.stats.date_range.end) {
+                    document.getElementById('dateRange').textContent =
+                        `${formatDate(data.stats.date_range.start)} - ${formatDate(data.stats.date_range.end)}`;
+                }
+            }
+        } catch (error) {
+            console.error('Error loading stats:', error);
+            document.getElementById('statsRow').innerHTML = `
+                <div class="col-12"><div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Unable to load statistics data.
+                </div></div>`;
+        }
+    }
+
+    /* --- COUNCIL GRID --- */
+    async function loadCouncil() {
+        try {
+            const data = await CityVotesAPI.getCouncil();
+            if (data.success) {
+                const grid = document.getElementById('councilGrid');
+                grid.innerHTML = data.members.map(member => `
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                        <div class="card council-card h-100">
+                            <div class="card-body text-center">
+                                <div class="council-avatar mb-3">
+                                    <i class="fas fa-user-circle fa-3x text-city-primary"></i>
+                                </div>
+                                <h5 class="card-title mb-1">${member.full_name}</h5>
+                                <div class="mb-2">
+                                    ${member.is_current
+                                        ? '<span class="badge bg-success">Current</span>'
+                                        : '<span class="badge bg-secondary">Former</span>'}
+                                </div>
+                                <p class="text-muted small mb-2">${member.position || 'Council Member'}</p>
+                                <div class="d-flex justify-content-around small">
+                                    <span class="text-success" title="Aye votes">
+                                        <i class="fas fa-check"></i> ${member.stats.aye_percentage}%
+                                    </span>
+                                    <span class="text-primary" title="Participation">
+                                        <i class="fas fa-chart-line"></i> ${member.stats.participation_rate}%
+                                    </span>
+                                </div>
+                                <a href="council-member.html?id=${member.id}" class="stretched-link"></a>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } catch (error) {
+            console.error('Error loading council:', error);
+        }
+    }
+
+    /* --- RECENT MEETINGS --- */
+    async function loadRecentMeetings() {
+        try {
+            const data = await CityVotesAPI.getMeetings();
+            if (data.success) {
+                const list = document.getElementById('recentMeetings');
+                list.innerHTML = data.meetings.slice(0, 5).map(meeting => `
+                    <a href="meeting-detail.html?id=${meeting.id}" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${formatDate(meeting.meeting_date)}</strong>
+                                <span class="badge bg-light text-dark ms-2">${meeting.meeting_type}</span>
+                            </div>
+                            <div>
+                                <span class="text-muted me-3">${meeting.vote_count} votes</span>
+                                ${meeting.agenda_url ? '<span class="badge bg-secondary me-1" title="Agenda"><i class="fas fa-file-alt"></i></span>' : ''}
+                                ${meeting.minutes_url ? '<span class="badge bg-secondary me-1" title="Minutes"><i class="fas fa-clipboard-list"></i></span>' : ''}
+                                ${meeting.video_url ? '<span class="badge bg-danger" title="Video"><i class="fas fa-video"></i></span>' : ''}
+                            </div>
+                        </div>
+                    </a>
+                `).join('');
+            }
+        } catch (error) {
+            console.error('Error loading meetings:', error);
+        }
+    }
+
+    /* --- VOTING ALIGNMENT --- */
+    async function loadAlignment() {
+        try {
+            const data = await CityVotesAPI.getAlignment();
+            if (data.success) {
+                document.getElementById('mostAligned').innerHTML = (data.most_aligned || []).map(pair => `
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>${pair.member1} & ${pair.member2}</span>
+                        <span class="badge bg-success">${pair.agreement_rate}%</span>
+                    </div>
+                    <small class="text-muted d-block mb-3">${pair.shared_votes} shared votes</small>
+                `).join('');
+
+                document.getElementById('leastAligned').innerHTML = (data.least_aligned || []).map(pair => `
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>${pair.member1} & ${pair.member2}</span>
+                        <span class="badge bg-warning text-dark">${pair.agreement_rate}%</span>
+                    </div>
+                    <small class="text-muted d-block mb-3">${pair.shared_votes} shared votes</small>
+                `).join('');
+            }
+        } catch (error) {
+            console.error('Error loading alignment:', error);
+        }
+    }
+
+    /* --- HELPERS --- */
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    </script>
+</body>
+</html>

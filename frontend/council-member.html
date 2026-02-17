@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!--
+        PAGE TITLE & META
+        =================
+        - Document title includes the member name (set dynamically via JS) and the city name.
+        - Dallas is replaced at deploy time with the actual city name.
+        - Meta description provides SEO summary for this council member profile page.
+    -->
+    <title>Council Member - CityVotes Dallas</title>
+    <meta name="description" content="Council member voting profile, alignment data, and vote history.">
+
+    <!--
+        OPEN GRAPH META TAGS
+        ====================
+        - og:type is "profile" since this page represents an individual council member.
+        - og:title and og:description mirror the <title> and meta description.
+        - og:site_name identifies the parent site brand.
+        - These tags control how the page appears when shared on Facebook, LinkedIn, etc.
+    -->
+    <meta property="og:type" content="profile">
+    <meta property="og:title" content="Council Member - CityVotes Dallas">
+    <meta property="og:description" content="Council member voting profile, alignment data, and vote history.">
+    <meta property="og:site_name" content="CityVotes">
+
+    <!--
+        TWITTER CARD META TAGS
+        ======================
+        - twitter:card "summary" gives a small card preview when shared on Twitter/X.
+        - title and description match the OG tags for consistency.
+    -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Council Member - CityVotes Dallas">
+    <meta name="twitter:description" content="Council member voting profile, alignment data, and vote history.">
+
+    <!--
+        CDN DEPENDENCIES
+        ================
+        - Bootstrap 5.3.0 CSS: Provides the grid system (container, row, col-*), cards, badges,
+          tables, forms, modals, navbars, pagination, progress bars, and responsive utilities.
+        - Font Awesome 6.4.0: Icon library used throughout for visual indicators
+          (fa-vote-yea, fa-users, fa-check, fa-times, fa-chart-pie, etc.).
+        - Chart.js: Renders the doughnut chart for vote breakdown visualization.
+        - SRI integrity attributes are omitted for template cleanliness.
+    -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" crossorigin="anonymous"></script>
+
+    <!--
+        CUSTOM THEME CSS
+        ================
+        - css/theme.css defines city-specific color variables and utility classes:
+          - .bg-city-primary: The city's primary brand color (used on navbar, headers).
+          - .text-city-primary: Primary brand color for text (used on icons, headings).
+          - .text-city-accent: Accent/secondary color for text (used on highlights, links).
+        - Each city deployment provides its own theme.css with appropriate color values.
+    -->
+    <link href="css/theme.css" rel="stylesheet">
+
+    <!--
+        PAGE-SPECIFIC INLINE STYLES
+        ===========================
+        - .alignment-card: Adds a subtle hover lift effect (translateY -2px) to the
+          voting alignment cards in the sidebar. Transition is 0.2s for smooth animation.
+        - .filter-section: Light gray background (#f8f9fa) with rounded corners (8px)
+          for the filter controls area, visually grouping the search/filter inputs.
+    -->
+    <style>
+        .alignment-card { transition: transform 0.2s; }
+        .alignment-card:hover { transform: translateY(-2px); }
+        .filter-section { background-color: #f8f9fa; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <!--
+        SKIP NAVIGATION LINK
+        ====================
+        - Hidden by default (visually-hidden-focusable), becomes visible on keyboard focus.
+        - Allows keyboard/screen-reader users to skip past the navbar directly to #main-content.
+        - "skip-link" class may add additional custom styling from theme.css.
+    -->
+    <a href="#main-content" class="visually-hidden-focusable skip-link">Skip to main content</a>
+
+    <!--
+        MAIN NAVIGATION BAR
+        ====================
+        - Uses Bootstrap's navbar component: navbar-expand-lg collapses below lg (992px) breakpoint.
+        - navbar-dark: Light text on dark background.
+        - bg-city-primary: City's primary brand color as background (defined in theme.css).
+        - Contains:
+          1. Brand logo/link (fa-vote-yea icon + "CityVotes" text) linking to index.html.
+          2. Hamburger toggler button for mobile (data-bs-toggle="collapse").
+          3. Nav links: Home, Council (marked active since this is a council sub-page),
+             Meetings, Votes, Search. Each has a Font Awesome icon with me-1 spacing.
+          4. Help button: btn-outline-light btn-sm, links to about.html.
+          5. City name indicator: text-city-accent with map marker icon, right-aligned in navbar.
+        - The "container" class constrains content to Bootstrap's max-width (1140px at xl).
+    -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-city-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-vote-yea me-2"></i>CityVotes
+            </a>
+
+            <!--
+                MOBILE HAMBURGER TOGGLE
+                =======================
+                - Visible only below lg breakpoint (< 992px).
+                - Toggles visibility of #navbarNav collapse container.
+                - navbar-toggler-icon provides the three-line hamburger icon.
+            -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <!--
+                    NAV LINK LIST
+                    =============
+                    - me-auto pushes the Help button and city name to the right.
+                    - "active" class is on the Council link since this page is a
+                      sub-page of the Council section.
+                    - Each nav-link includes a Font Awesome icon (me-1 margin-end)
+                      followed by the link text.
+                -->
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="council.html">
+                            <i class="fas fa-users me-1"></i>Council
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="meetings.html">
+                            <i class="fas fa-calendar me-1"></i>Meetings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="votes.html">
+                            <i class="fas fa-check-square me-1"></i>Votes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="agenda-search.html">
+                            <i class="fas fa-search me-1"></i>Search
+                        </a>
+                    </li>
+                </ul>
+
+                <!--
+                    HELP BUTTON
+                    ===========
+                    - btn-outline-light: White outlined button that inverts on hover.
+                    - btn-sm: Small size variant.
+                    - me-3: Margin-end spacing before the city name text.
+                -->
+                <a href="about.html" class="btn btn-outline-light btn-sm me-3">
+                    <i class="fas fa-question-circle me-1"></i>Help
+                </a>
+
+                <!--
+                    CITY NAME INDICATOR
+                    ===================
+                    - navbar-text: Vertically centers text within the navbar.
+                    - text-city-accent: Uses the city's accent color for the city name.
+                    - fa-map-marker-alt icon visually indicates a location.
+                    - Dallas is replaced with the actual city name at deploy time.
+                -->
+                <span class="navbar-text text-city-accent">
+                    <i class="fas fa-map-marker-alt me-1"></i>Dallas
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <!--
+        BREADCRUMB NAVIGATION
+        =====================
+        - bg-light: Light gray background strip below the navbar.
+        - py-2: Vertical padding (0.5rem top and bottom).
+        - Breadcrumb trail: Home > Council > [Member Name].
+        - The last breadcrumb item (#breadcrumbName) is "active" (not a link) and is
+          populated dynamically by JavaScript with the council member's full_name.
+        - Initially shows "Loading..." until JS replaces it.
+    -->
+    <nav class="bg-light py-2">
+        <div class="container">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                <li class="breadcrumb-item"><a href="council.html">Council</a></li>
+                <li class="breadcrumb-item active" id="breadcrumbName">Loading...</li>
+            </ol>
+        </div>
+    </nav>
+
+    <!--
+        MAIN CONTENT AREA
+        =================
+        - id="main-content": Target for the skip-navigation link.
+        - Bootstrap container class constrains width; my-4 adds vertical margin (1.5rem).
+        - Contains three mutually exclusive states:
+          1. #loadingState: Shown while API data is being fetched.
+          2. #memberProfile: Shown when data loads successfully (hidden by default).
+          3. #errorState: Shown when loading fails (hidden by default).
+        - JavaScript toggles visibility of these states via display:none/block.
+    -->
+    <main id="main-content" class="container my-4">
+
+        <!--
+            LOADING STATE
+            =============
+            - Centered spinner (text-center py-5 for padding).
+            - Bootstrap spinner-border with text-primary color.
+            - visually-hidden span provides accessible "Loading..." text for screen readers.
+            - Hidden by JS once data loads or an error occurs.
+        -->
+        <div id="loadingState" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+
+        <!--
+            MEMBER PROFILE (main content, hidden until data loads)
+            ======================================================
+            - This entire div is toggled visible by displayMemberHeader() after successful API load.
+            - Contains these sections in order:
+              1. Header row: Member avatar icon, name, position, and term dates.
+              2. Stats cards row: 4 summary statistics.
+              3. Filters section: Search, topic, year, and vote choice filters.
+              4. Vote History + Alignment row: Two-column layout (8+4 on lg).
+              5. Charts row: Vote breakdown doughnut chart + voting statistics bars.
+        -->
+        <div id="memberProfile" style="display: none;">
+
+            <!--
+                MEMBER HEADER ROW
+                =================
+                - row mb-4: Bootstrap grid row with bottom margin.
+                - col-md-6: Takes half width on medium+ screens (>= 768px), full width on mobile.
+                - d-flex align-items-center: Flexbox layout to vertically center avatar and text.
+                - Left side (me-4): Large user icon (fa-user-circle fa-5x) in text-city-primary color.
+                  This is a placeholder; a real photo could replace this icon.
+                - Right side: Stacked text elements:
+                  - #memberName (h1, mb-1): Populated with API field `member.full_name`.
+                  - #memberPosition (p, text-muted): Populated with `member.position` or defaults to "Council Member".
+                  - #memberTerm (small, text-muted): Populated with "Term: [start_year] - [end_year|Present]"
+                    derived from `member.start_date` and `member.end_date`.
+            -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <div class="me-4">
+                            <i class="fas fa-user-circle fa-5x text-city-primary"></i>
+                        </div>
+                        <div>
+                            <h1 class="mb-1" id="memberName">--</h1>
+                            <p class="text-muted mb-0" id="memberPosition">--</p>
+                            <small class="text-muted" id="memberTerm">--</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--
+                STATS CARDS ROW
+                ===============
+                - 4 equal-width stat cards in a responsive grid.
+                - col-md-3 col-6: Each card is 25% width on medium+ (>= 768px), 50% on small screens.
+                - mb-3: Bottom margin on each column for spacing when they stack.
+                - Each card uses: card text-center h-100 (full height for equal card heights in the row).
+                - card-body contains:
+                  - An h3 with a color class for the stat value (populated by updateStats() from filtered votes).
+                  - A <small class="text-muted"> label below.
+                - The 4 stats are:
+                  1. Matching Votes (#statTotalVotes, text-primary/blue): Total count of votes matching
+                     current filters. Data: filteredMemberVotes.length.
+                  2. Aye Rate (#statAyeRate, text-success/green): Percentage of filtered votes that were "AYE".
+                     Data: (ayeCount / total * 100).
+                  3. Participation (#statParticipation, text-info/teal): Percentage of votes where member
+                     was present and voted (not ABSENT or ABSTAIN). Data: ((total - absent - abstain) / total * 100).
+                  4. Dissent Rate (#statDissent, text-warning/amber): Percentage of votes where this member
+                     was on the losing side (voted AYE on FAIL, or NAY on PASS). Excludes ABSENT, ABSTAIN,
+                     and non-standard outcomes (CONTINUED, REMOVED, FLAG, TABLED, WITHDRAWN).
+                     #statDissentDetail shows "X of Y votes" detail text.
+            -->
+            <div class="row mb-4">
+                <!-- Stat Card 1: Matching Votes (blue) -->
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <h3 class="text-primary" id="statTotalVotes">--</h3>
+                            <small class="text-muted">Matching Votes</small>
+                        </div>
+                    </div>
+                </div>
+                <!-- Stat Card 2: Aye Rate (green) -->
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <h3 class="text-success" id="statAyeRate">--%</h3>
+                            <small class="text-muted">Aye Rate</small>
+                        </div>
+                    </div>
+                </div>
+                <!-- Stat Card 3: Participation Rate (teal/info) -->
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <h3 class="text-info" id="statParticipation">--%</h3>
+                            <small class="text-muted">Participation</small>
+                        </div>
+                    </div>
+                </div>
+                <!-- Stat Card 4: Dissent Rate (amber/warning) -->
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <h3 class="text-warning" id="statDissent">--%</h3>
+                            <small class="text-muted">Dissent Rate</small>
+                            <!--
+                                #statDissentDetail: Shows "X of Y votes" below the percentage.
+                                Data: `${dissents} of ${validVotes} votes` from updateStats().
+                            -->
+                            <div class="small text-muted mt-1" id="statDissentDetail"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--
+                FILTERS SECTION
+                ===============
+                - Wrapped in a card with card-body that has the .filter-section class
+                  (light gray background, rounded corners).
+                - Uses a Bootstrap row with g-2 gutter spacing and align-items-end
+                  so all inputs bottom-align regardless of label height.
+                - Contains 5 columns:
+                  1. col-md-4: Text search input with input-group (search icon prefix).
+                     - #voteSearchInput: Filters vote titles via substring match (case-insensitive).
+                     - Has 300ms debounce on input event before triggering filter.
+                  2. col-md-3: Topic dropdown (#voteTopicFilter).
+                     - Options populated dynamically from unique `vote.topics[]` values across all member votes.
+                     - "General" topic is sorted last; all others alphabetical.
+                  3. col-md-2: Year dropdown (#voteYearFilter).
+                     - Options populated from unique years extracted from `vote.meeting_date`.
+                     - Sorted descending (newest first).
+                  4. col-md-2: Vote choice dropdown (#voteChoiceFilter).
+                     - Static options: All Votes, Aye (AYE), Nay (NAY), Abstain (ABSTAIN), Absent (ABSENT).
+                  5. col-md-1: Clear filters button (#clearVoteFilters).
+                     - btn-outline-secondary w-100: Full-width gray outlined button.
+                     - Resets all filter inputs and re-triggers filterAndUpdateAll().
+                - Column widths total 12 (4+3+2+2+1) for a clean single-row layout on md+.
+                - On small screens, columns stack naturally.
+            -->
+            <div class="card mb-4">
+                <div class="card-body filter-section">
+                    <div class="row g-2 align-items-end">
+                        <!-- Search input: col-md-4 (33% width on md+) -->
+                        <div class="col-md-4">
+                            <label for="voteSearchInput" class="form-label small text-muted mb-1">Search Votes</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="voteSearchInput"
+                                       placeholder="Search by title..." aria-label="Search votes by title">
+                            </div>
+                        </div>
+                        <!-- Topic filter: col-md-3 (25% width on md+) -->
+                        <div class="col-md-3">
+                            <label for="voteTopicFilter" class="form-label small text-muted mb-1">Topic</label>
+                            <select class="form-select" id="voteTopicFilter" aria-label="Filter votes by topic">
+                                <option value="">All Topics</option>
+                            </select>
+                        </div>
+                        <!-- Year filter: col-md-2 (16.7% width on md+) -->
+                        <div class="col-md-2">
+                            <label for="voteYearFilter" class="form-label small text-muted mb-1">Year</label>
+                            <select class="form-select" id="voteYearFilter" aria-label="Filter votes by year">
+                                <option value="">All Years</option>
+                            </select>
+                        </div>
+                        <!-- Vote choice filter: col-md-2 (16.7% width on md+) -->
+                        <div class="col-md-2">
+                            <label for="voteChoiceFilter" class="form-label small text-muted mb-1">Vote</label>
+                            <select class="form-select" id="voteChoiceFilter" aria-label="Filter by vote choice">
+                                <option value="">All Votes</option>
+                                <option value="AYE">Aye</option>
+                                <option value="NAY">Nay</option>
+                                <option value="ABSTAIN">Abstain</option>
+                                <option value="ABSENT">Absent</option>
+                                <option value="RECUSAL">Recusal</option>
+                            </select>
+                        </div>
+                        <!-- Clear filters button: col-md-1 (8.3% width on md+) -->
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-outline-secondary w-100" id="clearVoteFilters" aria-label="Clear vote filters">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--
+                VOTE HISTORY + ALIGNMENT SIDE-BY-SIDE LAYOUT
+                =============================================
+                - Two-column layout using Bootstrap grid:
+                  - col-lg-8 (66.7% on lg/>=992px): Vote History table (left/main column).
+                  - col-lg-4 (33.3% on lg/>=992px): Voting Alignment sidebar (right column).
+                - Both columns have mb-4 for bottom margin and stack vertically below lg breakpoint.
+                - h-100 on both inner cards ensures equal height when side by side.
+            -->
+            <div class="row mb-4">
+
+                <!--
+                    VOTE HISTORY TABLE
+                    ==================
+                    - col-lg-8: Takes 2/3 width on large screens, full width on smaller.
+                    - card h-100: Full-height card to match alignment sidebar.
+                    - card-header: Contains title "Vote History" with fa-history icon, and a
+                      right-aligned #votesShowing counter ("Showing X-Y of Z votes").
+                      Uses d-flex justify-content-between align-items-center for layout.
+                    - table-responsive: Adds horizontal scroll on small screens if table overflows.
+                    - table table-hover mb-0: Standard Bootstrap table with hover highlight, no bottom margin.
+                    - thead table-light: Light gray header row.
+                    - Table columns:
+                      1. Date: Formatted from `vote.meeting_date` via formatDate() -> "Mon DD, YYYY".
+                      2. Item: `vote.item_number` displayed in a badge (bg-light text-dark).
+                      3. Title: `vote.title` truncated to 40 chars, linked to vote-detail.html?id={vote_id}.
+                         Search terms are highlighted with <mark> tags via highlightSearch().
+                      4. Vote: `vote.vote_choice` rendered as a colored badge via getVoteBadge():
+                         - AYE: bg-success (green)
+                         - NAY: bg-danger (red)
+                         - ABSTAIN: bg-warning text-dark (amber)
+                         - ABSENT: bg-secondary (gray)
+                         - RECUSAL: bg-info (teal)
+                      5. Outcome: `vote.outcome` rendered as badge:
+                         - "PASS": bg-success, displays "Passed"
+                         - "FAIL": bg-danger, displays "Failed"
+                    - tbody #recentVotesTable: Populated dynamically by displayVotes().
+                      Shows a page of votePageSize (15) votes from filteredMemberVotes.
+                    - Empty state: Shows a centered search icon + "No votes match your filters" message.
+                -->
+                <div class="col-lg-8 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-history me-2"></i>Vote History</h5>
+                            <small class="text-muted" id="votesShowing">Loading...</small>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col">Date</th>
+                                        <th scope="col">Item</th>
+                                        <th scope="col">Title</th>
+                                        <th scope="col">Vote</th>
+                                        <th scope="col">Outcome</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentVotesTable">
+                                    <!--
+                                        VOTE TABLE ROWS (populated by displayVotes() in JS)
+                                        ====================================================
+                                        Each <tr> is generated from a vote object with these fields:
+                                        - vote.meeting_date  -> Date column (formatted)
+                                        - vote.item_number   -> Item column (badge)
+                                        - vote.vote_id       -> Link href for Title column
+                                        - vote.title         -> Title column text (truncated, search-highlighted)
+                                        - vote.vote_choice   -> Vote column (colored badge)
+                                        - vote.outcome       -> Outcome column (PASS/FAIL badge)
+                                    -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!--
+                            VOTE PAGINATION
+                            ===============
+                            - card-footer: Gray footer area below the table.
+                            - Hidden when totalPages <= 1 (controlled by updateVotePagination()).
+                            - pagination pagination-sm: Small Bootstrap pagination component.
+                            - justify-content-center: Centers the pagination controls.
+                            - Shows: Prev | 1 ... [pages] ... Last | Next
+                            - Max 5 page numbers visible at a time, with ellipsis for gaps.
+                            - Each page link has data-offset attribute = pageIndex * votePageSize (15).
+                            - Click handler on #votePagination reads data-offset, updates voteCurrentOffset,
+                              then re-renders displayVotes() and updateVotePagination().
+                        -->
+                        <div class="card-footer" id="votePaginationContainer" style="display: none;">
+                            <nav>
+                                <ul class="pagination pagination-sm justify-content-center mb-0" id="votePagination">
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+
+                <!--
+                    VOTING ALIGNMENT SIDEBAR
+                    ========================
+                    - col-lg-4: Takes 1/3 width on large screens, full width on smaller.
+                    - card h-100: Full-height card to match vote history table.
+                    - card-header contains:
+                      - Title "Voting Alignment" with fa-users icon.
+                      - #alignmentRange (small text-muted): Shows the min-max range of alignment
+                        percentages (e.g., "65-95%"). Data: calculated from all alignment pairs.
+                      - #alignmentSummary: A thin progress bar (8px height) showing the average
+                        alignment percentage. Bar color changes based on average:
+                        - >= 80%: bg-success (green)
+                        - >= 60%: bg-warning (amber)
+                        - < 60%: bg-danger (red)
+                    - card-body contains two sections:
+                      1. Most Aligned (#mostAligned): Top 3 council members this member votes
+                         with most often. Heading is text-success with fa-thumbs-up icon.
+                      2. Least Aligned (#leastAligned): Bottom 3 council members. Heading is
+                         text-danger with fa-thumbs-down icon.
+                    - Each alignment entry is rendered by createAlignmentCard() as:
+                      - .alignment-card: A bordered rounded flex container with hover effect.
+                      - Left: Member name (linked to their council-member.html?id=X if found in
+                        councilMembers array) + "N shared votes" subtitle.
+                      - Right: Badge showing agreement percentage.
+                        - Most aligned cards use bg-success (green) badges.
+                        - Least aligned cards use bg-danger (red) badges.
+                    - Data sources:
+                      - Without filters: Uses pre-computed alignmentData from CityVotesAPI.getAlignment().
+                        Matches by last name from alignment_pairs[].member1/member2.
+                      - With filters: Recalculates alignment on-the-fly by comparing filtered vote
+                        choices against all other council members' votes (loaded via loadAllCouncilVotes()).
+                -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0"><i class="fas fa-users me-2"></i>Voting Alignment</h5>
+                                <small class="text-muted" id="alignmentRange">--</small>
+                            </div>
+                            <div id="alignmentSummary" class="mt-2">
+                                <div class="progress" style="height: 8px;">
+                                    <div id="alignmentBar" class="progress-bar bg-success" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- Most Aligned: Top 3 members with highest agreement rate -->
+                            <div class="mb-4">
+                                <h6 class="text-success"><i class="fas fa-thumbs-up me-2"></i>Most Aligned</h6>
+                                <div id="mostAligned">
+                                    <div class="text-muted small">Loading...</div>
+                                </div>
+                            </div>
+                            <!-- Least Aligned: Bottom 3 members with lowest agreement rate -->
+                            <div>
+                                <h6 class="text-danger"><i class="fas fa-thumbs-down me-2"></i>Least Aligned</h6>
+                                <div id="leastAligned">
+                                    <div class="text-muted small">Loading...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--
+                VOTE BREAKDOWN CHARTS ROW
+                =========================
+                - Two equal-width columns: col-md-6 each (50% on md+, full width on small screens).
+                - Both have mb-4 for bottom margin.
+                - h-100 on cards for equal height.
+            -->
+            <div class="row mb-4">
+
+                <!--
+                    DOUGHNUT CHART: VOTE BREAKDOWN
+                    ==============================
+                    - col-md-6: Left half on md+ screens.
+                    - card-header: Title "Vote Breakdown" with fa-chart-pie icon.
+                    - card-body: Contains a <canvas> element (#voteChart) for Chart.js.
+                      - role="img" and aria-label provide accessibility for the chart.
+                      - Chart.js renders a doughnut chart with 4 segments:
+                        - Aye: #28a745 (green)
+                        - Nay: #dc3545 (red)
+                        - Abstain: #ffc107 (amber)
+                        - Absent: #6c757d (gray)
+                      - Legend positioned at bottom.
+                      - Chart is responsive (fills container width).
+                    - #voteChartDescription: Hidden aria-live="polite" div that provides a text
+                      description of the chart for screen readers, updated by updateCharts().
+                      Example: "Vote breakdown: 150 Aye votes (75.0%), 30 Nay votes, 10 Abstain, 10 Absent."
+                    - Data: Counts of each vote_choice from filteredMemberVotes.
+                -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Vote Breakdown</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="voteChart" role="img" aria-label="Doughnut chart showing vote breakdown"></canvas>
+                            <div id="voteChartDescription" class="visually-hidden" aria-live="polite"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!--
+                    VOTING STATISTICS BARS
+                    ======================
+                    - col-md-6: Right half on md+ screens.
+                    - card-header: Title "Voting Statistics" with fa-chart-bar icon.
+                    - card-body (#voteStats): Populated dynamically by updateCharts() with
+                      4 stacked progress bar sections, each containing:
+                      - d-flex justify-content-between: Label on left, count on right.
+                      - Label includes a Font Awesome icon with the corresponding color:
+                        - Aye: fa-check text-success (green)
+                        - Nay: fa-times text-danger (red)
+                        - Abstain: fa-minus text-warning (amber)
+                        - Absent: fa-user-slash text-secondary (gray)
+                      - Progress bar (8px height) with width = (count / total * 100)%.
+                        Bar colors: bg-success, bg-danger, bg-warning, bg-secondary respectively.
+                    - Data: Same filtered vote counts used for the doughnut chart.
+                -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Voting Statistics</h5>
+                        </div>
+                        <div class="card-body" id="voteStats">
+                            <!-- Stats bars are populated dynamically by updateCharts() -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--
+            ERROR STATE
+            ===========
+            - Hidden by default (display: none).
+            - Shown by showError() when API calls fail or member ID is invalid.
+            - alert alert-danger: Red Bootstrap alert box with exclamation icon.
+            - #errorMessage: Text content set by showError() with a descriptive message.
+            - "Back to Council" link: btn btn-primary linking to council.html.
+            - If showRetry=true, a "Try Again" button is dynamically inserted after the alert
+              that calls location.reload() on click.
+        -->
+        <div id="errorState" style="display: none;">
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <span id="errorMessage">Failed to load member data.</span>
+            </div>
+            <a href="council.html" class="btn btn-primary">Back to Council</a>
+        </div>
+    </main>
+
+    <!--
+        FOOTER
+        ======
+        - bg-dark text-light: Dark background with light text.
+        - py-4 mt-5: Vertical padding and top margin to separate from content.
+        - Two-column layout (row):
+          - col-md-6 (left): Site title "CityVotes - Dallas Voting Transparency" and
+            a text-muted description about data sourcing. Dallas replaced at deploy time.
+          - col-md-4 text-end (right): CTA text "Want a different city?" with a link to
+            contact.html styled in text-city-accent (the city's accent color).
+        - Note: col-md-6 + col-md-4 = 10 of 12 columns, leaving col-md-2 of empty space on the right
+          for visual breathing room.
+    -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>CityVotes - Dallas Voting Transparency</h6>
+                    <p class="text-muted mb-0">Data sourced from official Dallas city council meeting records.</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <p class="mb-0">Want a different city? <a href="contact.html" class="text-city-accent">Contact us</a></p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!--
+        BOOTSTRAP JS BUNDLE
+        ====================
+        - Includes Popper.js for dropdowns, tooltips, popovers.
+        - Required for navbar collapse toggle, dropdown menus, and other interactive Bootstrap components.
+        - SRI integrity attribute omitted for template cleanliness.
+    -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+
+    <!--
+        CITYVOTES API LAYER
+        ===================
+        - js/api.js provides the CityVotesAPI object with methods:
+          - CityVotesAPI.getCouncilMember(id): Returns { success, member } with member.full_name,
+            member.position, member.start_date, member.end_date, member.all_votes (or recent_votes).
+          - CityVotesAPI.getAlignment(): Returns { alignment_pairs: [{ member1, member2, agreement_rate,
+            shared_votes, agreements }] }.
+          - CityVotesAPI.getCouncil(): Returns { members (or council_members): [{ id, full_name, short_name }] }.
+        - This script must load before the inline <script> below that calls these methods.
+    -->
+    <script src="js/api.js"></script>
+
+    <!--
+        PAGE JAVASCRIPT
+        ===============
+        All client-side logic for this council member profile page.
+        Handles: data loading, filtering, pagination, chart rendering, alignment calculation.
+
+        STATE VARIABLES:
+        - currentMember: The loaded member object from the API.
+        - allMemberVotes: Full unfiltered array of vote objects for this member.
+        - filteredMemberVotes: Subset of allMemberVotes after applying search/topic/year/choice filters.
+        - alignmentData: Pre-computed alignment pairs from CityVotesAPI.getAlignment().
+        - councilMembers: Array of all council members from CityVotesAPI.getCouncil().
+        - allCouncilVotes: Map of memberId -> votes array for other council members (for filtered alignment).
+        - availableYears: Sorted array of years found in allMemberVotes (descending).
+        - availableTopics: Sorted array of topic strings found in allMemberVotes (alphabetical, "General" last).
+        - voteCurrentOffset: Current pagination offset (0-indexed) for the vote history table.
+        - votePageSize: Number of votes per page (15).
+        - voteChart: Chart.js instance for the doughnut chart (destroyed and recreated on each update).
+
+        FLOW:
+        1. DOMContentLoaded: Read ?id= param from URL -> loadMember(id) -> setupEventListeners().
+        2. loadMember(): Parallel API calls for member data, alignment, and council list.
+           On success: displayMemberHeader(), populateFilterDropdowns(), filterAndUpdateAll(),
+           displayAlignment(), and background loadAllCouncilVotes().
+        3. filterAndUpdateAll(): Applies all active filters to allMemberVotes -> filteredMemberVotes,
+           then calls updateStats(), displayVotes(), updateVotePagination(), updateCharts(), updateAlignment().
+        4. Event listeners: Search input (debounced 300ms), dropdowns, clear button, pagination clicks.
+    -->
+    <script>
+    // State
+    let currentMember = null;
+    let allMemberVotes = [];
+    let filteredMemberVotes = [];
+    let alignmentData = null;
+    let councilMembers = [];
+    let allCouncilVotes = {}; // Map of memberId -> votes array for alignment calculation
+    let availableYears = [];
+    let availableTopics = [];
+    let voteCurrentOffset = 0;
+    const votePageSize = 15;
+    let voteChart = null;
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const memberId = urlParams.get('id');
+
+        if (!memberId) {
+            showError('No member ID provided');
+            return;
+        }
+
+        await loadMember(memberId);
+        setupEventListeners();
+    });
+
+    function setupEventListeners() {
+        // Vote search with debounce
+        let searchTimeout;
+        document.getElementById('voteSearchInput').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                voteCurrentOffset = 0;
+                filterAndUpdateAll();
+            }, 300);
+        });
+
+        // Vote filter changes
+        ['voteTopicFilter', 'voteYearFilter', 'voteChoiceFilter'].forEach(id => {
+            document.getElementById(id).addEventListener('change', function() {
+                voteCurrentOffset = 0;
+                filterAndUpdateAll();
+            });
+        });
+
+        // Clear vote filters
+        document.getElementById('clearVoteFilters').addEventListener('click', function() {
+            document.getElementById('voteSearchInput').value = '';
+            document.getElementById('voteTopicFilter').value = '';
+            document.getElementById('voteYearFilter').value = '';
+            document.getElementById('voteChoiceFilter').value = '';
+            voteCurrentOffset = 0;
+            filterAndUpdateAll();
+        });
+
+        // Vote pagination
+        document.getElementById('votePagination').addEventListener('click', function(e) {
+            e.preventDefault();
+            const link = e.target.closest('a.page-link');
+            if (link && !link.closest('.disabled')) {
+                const offset = parseInt(link.getAttribute('data-offset'), 10);
+                if (!isNaN(offset) && offset >= 0) {
+                    voteCurrentOffset = offset;
+                    displayVotes();
+                    updateVotePagination();
+                }
+            }
+        });
+
+    }
+
+    async function loadMember(memberId) {
+        try {
+            // Load member data, alignment data, and council list in parallel
+            const [memberData, alignmentResponse, councilResponse] = await Promise.all([
+                CityVotesAPI.getCouncilMember(memberId),
+                CityVotesAPI.getAlignment(),
+                CityVotesAPI.getCouncil()
+            ]);
+
+            if (memberData.success) {
+                currentMember = memberData.member;
+                allMemberVotes = memberData.member.all_votes || memberData.member.recent_votes || [];
+                alignmentData = alignmentResponse;
+                councilMembers = councilResponse.members || councilResponse.council_members || [];
+
+                displayMemberHeader(currentMember);
+                populateFilterDropdowns();
+                filterAndUpdateAll();
+                displayAlignment();
+
+                // Load all other council members' votes in background for filtered alignment
+                loadAllCouncilVotes(memberId);
+            } else {
+                showError('Council member not found. The member ID may be invalid.');
+            }
+        } catch (error) {
+            console.error('Error loading member:', error);
+            if (error.message.includes('Invalid')) {
+                showError(error.message);
+            } else if (error.message.includes('Not found')) {
+                showError('Council member not found. Please check the ID and try again.');
+            } else if (error.message.includes('timed out')) {
+                showError('Request timed out. Please check your connection and try again.', true);
+            } else {
+                showError('Failed to load member data. Please try again later.', true);
+            }
+        }
+    }
+
+    async function loadAllCouncilVotes(currentMemberId) {
+        // Load votes for all other council members (for filtered alignment calculation)
+        const otherMembers = councilMembers.filter(m => m.id !== parseInt(currentMemberId));
+
+        try {
+            const promises = otherMembers.map(m => CityVotesAPI.getCouncilMember(m.id));
+            const results = await Promise.all(promises);
+
+            results.forEach((data, idx) => {
+                if (data.success && data.member) {
+                    const memberId = otherMembers[idx].id;
+                    allCouncilVotes[memberId] = data.member.all_votes || data.member.recent_votes || [];
+                }
+            });
+
+            // If filters are active, recalculate alignment with loaded data
+            const hasFilters = document.getElementById('voteSearchInput').value.trim() ||
+                              document.getElementById('voteTopicFilter').value ||
+                              document.getElementById('voteYearFilter').value ||
+                              document.getElementById('voteChoiceFilter').value;
+
+            if (hasFilters) {
+                updateAlignment();
+            }
+        } catch (error) {
+            console.error('Error loading council votes for alignment:', error);
+        }
+    }
+
+    function displayMemberHeader(member) {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('memberProfile').style.display = 'block';
+
+        // Header
+        document.getElementById('memberName').textContent = member.full_name;
+        document.getElementById('breadcrumbName').textContent = member.full_name;
+        document.getElementById('memberPosition').textContent = member.position || 'Council Member';
+        document.title = `${member.full_name} - CityVotes Dallas`;
+
+        if (member.start_date) {
+            const start = new Date(member.start_date).getFullYear();
+            const end = member.end_date ? new Date(member.end_date).getFullYear() : 'Present';
+            document.getElementById('memberTerm').textContent = `Term: ${start} - ${end}`;
+        }
+    }
+
+    function populateFilterDropdowns() {
+        // Extract unique years and topics from votes
+        const years = new Set();
+        const topics = new Set();
+
+        allMemberVotes.forEach(vote => {
+            if (vote.meeting_date) {
+                years.add(new Date(vote.meeting_date).getFullYear());
+            }
+            // Collect topics from the topics array
+            if (vote.topics && Array.isArray(vote.topics)) {
+                vote.topics.forEach(t => topics.add(t));
+            }
+        });
+
+        availableYears = Array.from(years).sort((a, b) => b - a);
+        // Sort topics by name, but put 'General' last
+        availableTopics = Array.from(topics).sort((a, b) => {
+            if (a === 'General') return 1;
+            if (b === 'General') return -1;
+            return a.localeCompare(b);
+        });
+
+        // Populate year dropdown
+        const voteYearSelect = document.getElementById('voteYearFilter');
+        availableYears.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            voteYearSelect.appendChild(option);
+        });
+
+        // Populate topic dropdown
+        const topicSelect = document.getElementById('voteTopicFilter');
+        availableTopics.forEach(topic => {
+            const option = document.createElement('option');
+            option.value = topic;
+            option.textContent = topic;
+            topicSelect.appendChild(option);
+        });
+    }
+
+    function filterAndUpdateAll() {
+        const search = document.getElementById('voteSearchInput').value.trim().toLowerCase();
+        const topic = document.getElementById('voteTopicFilter').value;
+        const year = document.getElementById('voteYearFilter').value;
+        const choice = document.getElementById('voteChoiceFilter').value;
+
+        // Filter votes
+        filteredMemberVotes = allMemberVotes.filter(vote => {
+            // Year filter
+            if (year) {
+                const voteYear = new Date(vote.meeting_date).getFullYear();
+                if (voteYear !== parseInt(year)) return false;
+            }
+
+            // Topic filter - check if selected topic is in vote's topics array
+            if (topic) {
+                const voteTopics = vote.topics || [];
+                if (!voteTopics.includes(topic)) return false;
+            }
+
+            // Choice filter
+            if (choice && vote.vote_choice !== choice) return false;
+
+            // Search filter
+            if (search) {
+                const title = (vote.title || '').toLowerCase();
+                if (!title.includes(search)) return false;
+            }
+
+            return true;
+        });
+
+        // Update all sections based on filtered data
+        updateStats();
+        displayVotes();
+        updateVotePagination();
+        updateCharts();
+        updateAlignment();
+    }
+
+    function updateStats() {
+        // Calculate stats from filtered votes
+        const total = filteredMemberVotes.length;
+        const ayeCount = filteredMemberVotes.filter(v => v.vote_choice === 'AYE').length;
+        const nayCount = filteredMemberVotes.filter(v => v.vote_choice === 'NAY').length;
+        const abstainCount = filteredMemberVotes.filter(v => v.vote_choice === 'ABSTAIN').length;
+        const absentCount = filteredMemberVotes.filter(v => v.vote_choice === 'ABSENT').length;
+        const participated = total - absentCount - abstainCount;
+
+        const ayeRate = total > 0 ? ((ayeCount / total) * 100).toFixed(1) : 0;
+        const participationRate = total > 0 ? ((participated / total) * 100).toFixed(1) : 0;
+
+        // Calculate dissent rate (votes on losing side)
+        // A member "dissents" when they vote AYE on a FAIL or NAY on a PASS
+        let dissents = 0;
+        let validVotes = 0;
+        filteredMemberVotes.forEach(vote => {
+            if (vote.vote_choice === 'ABSENT' || vote.vote_choice === 'ABSTAIN') return;
+            if (!vote.outcome || ['CONTINUED', 'REMOVED', 'FLAG', 'TABLED', 'WITHDRAWN'].includes(vote.outcome)) return;
+
+            validVotes++;
+            const isOnLosingSide =
+                (vote.outcome === 'PASS' && vote.vote_choice === 'NAY') ||
+                (vote.outcome === 'FAIL' && vote.vote_choice === 'AYE');
+            if (isOnLosingSide) dissents++;
+        });
+
+        const dissentRate = validVotes > 0 ? ((dissents / validVotes) * 100).toFixed(1) : 0;
+
+        document.getElementById('statTotalVotes').textContent = total.toLocaleString();
+        document.getElementById('statAyeRate').textContent = ayeRate + '%';
+        document.getElementById('statParticipation').textContent = participationRate + '%';
+        document.getElementById('statDissent').textContent = dissentRate + '%';
+        document.getElementById('statDissentDetail').textContent = `${dissents} of ${validVotes} votes`;
+    }
+
+    function updateCharts() {
+        // Calculate stats from filtered votes
+        const total = filteredMemberVotes.length;
+        const ayeCount = filteredMemberVotes.filter(v => v.vote_choice === 'AYE').length;
+        const nayCount = filteredMemberVotes.filter(v => v.vote_choice === 'NAY').length;
+        const abstainCount = filteredMemberVotes.filter(v => v.vote_choice === 'ABSTAIN').length;
+        const absentCount = filteredMemberVotes.filter(v => v.vote_choice === 'ABSENT').length;
+
+        const ayePercentage = total > 0 ? ((ayeCount / total) * 100).toFixed(1) : 0;
+
+        // Update vote stats display
+        document.getElementById('voteStats').innerHTML = `
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <span><i class="fas fa-check text-success me-2"></i>Aye</span>
+                    <strong>${ayeCount}</strong>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-success" style="width: ${ayePercentage}%"></div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <span><i class="fas fa-times text-danger me-2"></i>Nay</span>
+                    <strong>${nayCount}</strong>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-danger" style="width: ${total > 0 ? (nayCount / total * 100).toFixed(1) : 0}%"></div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <span><i class="fas fa-minus text-warning me-2"></i>Abstain</span>
+                    <strong>${abstainCount}</strong>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-warning" style="width: ${total > 0 ? (abstainCount / total * 100).toFixed(1) : 0}%"></div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <span><i class="fas fa-user-slash text-secondary me-2"></i>Absent</span>
+                    <strong>${absentCount}</strong>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-secondary" style="width: ${total > 0 ? (absentCount / total * 100).toFixed(1) : 0}%"></div>
+                </div>
+            </div>
+        `;
+
+        // Destroy existing chart if exists
+        if (voteChart) {
+            voteChart.destroy();
+        }
+
+        // Create new chart
+        voteChart = new Chart(document.getElementById('voteChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Aye', 'Nay', 'Abstain', 'Absent'],
+                datasets: [{
+                    data: [ayeCount, nayCount, abstainCount, absentCount],
+                    backgroundColor: ['#28a745', '#dc3545', '#ffc107', '#6c757d']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Update accessible chart description
+        document.getElementById('voteChartDescription').textContent =
+            `Vote breakdown: ${ayeCount} Aye votes (${ayePercentage}%), ` +
+            `${nayCount} Nay votes, ${abstainCount} Abstain, ${absentCount} Absent.`;
+    }
+
+    function displayVotes() {
+        const votesTable = document.getElementById('recentVotesTable');
+        const pageVotes = filteredMemberVotes.slice(voteCurrentOffset, voteCurrentOffset + votePageSize);
+
+        if (pageVotes.length === 0) {
+            votesTable.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-muted">
+                        <i class="fas fa-search fa-2x mb-2"></i>
+                        <p class="mb-0">No votes match your filters</p>
+                    </td>
+                </tr>
+            `;
+            document.getElementById('votesShowing').textContent = 'No votes found';
+            document.getElementById('votePaginationContainer').style.display = 'none';
+            return;
+        }
+
+        const search = document.getElementById('voteSearchInput').value.trim();
+
+        votesTable.innerHTML = pageVotes.map(vote => `
+            <tr>
+                <td><small>${formatDate(vote.meeting_date)}</small></td>
+                <td><span class="badge bg-light text-dark">${escapeHtml(vote.item_number)}</span></td>
+                <td><a href="vote-detail.html?id=${vote.vote_id}" class="text-decoration-none">${highlightSearch(truncate(vote.title, 40), search)}</a></td>
+                <td>${getVoteBadge(vote.vote_choice)}</td>
+                <td>${getOutcomeBadge(vote.outcome)}</td>
+            </tr>
+        `).join('');
+
+        // Update showing text
+        const start = voteCurrentOffset + 1;
+        const end = Math.min(voteCurrentOffset + pageVotes.length, filteredMemberVotes.length);
+        document.getElementById('votesShowing').textContent = `Showing ${start}-${end} of ${filteredMemberVotes.length} votes`;
+    }
+
+    function updateVotePagination() {
+        const total = filteredMemberVotes.length;
+        const totalPages = Math.ceil(total / votePageSize);
+        const currentPage = Math.floor(voteCurrentOffset / votePageSize);
+
+        if (totalPages <= 1) {
+            document.getElementById('votePaginationContainer').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('votePaginationContainer').style.display = 'block';
+        const pagination = document.getElementById('votePagination');
+        pagination.innerHTML = '';
+
+        // Previous button
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${currentPage === 0 ? 'disabled' : ''}`;
+        const prevLink = document.createElement('a');
+        prevLink.className = 'page-link';
+        prevLink.href = '#';
+        prevLink.textContent = 'Prev';
+        prevLink.setAttribute('data-offset', (currentPage - 1) * votePageSize);
+        prevLi.appendChild(prevLink);
+        pagination.appendChild(prevLi);
+
+        // Page numbers (show max 5 pages)
+        const startPage = Math.max(0, currentPage - 2);
+        const endPage = Math.min(totalPages - 1, currentPage + 2);
+
+        if (startPage > 0) {
+            const firstLi = document.createElement('li');
+            firstLi.className = 'page-item';
+            const firstLink = document.createElement('a');
+            firstLink.className = 'page-link';
+            firstLink.href = '#';
+            firstLink.textContent = '1';
+            firstLink.setAttribute('data-offset', 0);
+            firstLi.appendChild(firstLink);
+            pagination.appendChild(firstLi);
+
+            if (startPage > 1) {
+                const ellipsisLi = document.createElement('li');
+                ellipsisLi.className = 'page-item disabled';
+                ellipsisLi.innerHTML = '<span class="page-link">...</span>';
+                pagination.appendChild(ellipsisLi);
+            }
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            const li = document.createElement('li');
+            li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+            const link = document.createElement('a');
+            link.className = 'page-link';
+            link.href = '#';
+            link.textContent = i + 1;
+            link.setAttribute('data-offset', i * votePageSize);
+            li.appendChild(link);
+            pagination.appendChild(li);
+        }
+
+        if (endPage < totalPages - 1) {
+            if (endPage < totalPages - 2) {
+                const ellipsisLi = document.createElement('li');
+                ellipsisLi.className = 'page-item disabled';
+                ellipsisLi.innerHTML = '<span class="page-link">...</span>';
+                pagination.appendChild(ellipsisLi);
+            }
+            const lastLi = document.createElement('li');
+            lastLi.className = 'page-item';
+            const lastLink = document.createElement('a');
+            lastLink.className = 'page-link';
+            lastLink.href = '#';
+            lastLink.textContent = totalPages;
+            lastLink.setAttribute('data-offset', (totalPages - 1) * votePageSize);
+            lastLi.appendChild(lastLink);
+            pagination.appendChild(lastLi);
+        }
+
+        // Next button
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${currentPage === totalPages - 1 ? 'disabled' : ''}`;
+        const nextLink = document.createElement('a');
+        nextLink.className = 'page-link';
+        nextLink.href = '#';
+        nextLink.textContent = 'Next';
+        nextLink.setAttribute('data-offset', (currentPage + 1) * votePageSize);
+        nextLi.appendChild(nextLink);
+        pagination.appendChild(nextLi);
+    }
+
+    function displayAlignment() {
+        // Initial load - use pre-computed alignment data
+        updateAlignment();
+    }
+
+    function updateAlignment() {
+        if (!currentMember) return;
+
+        // If no filters active, use pre-computed alignment data
+        const hasFilters = document.getElementById('voteSearchInput').value.trim() ||
+                          document.getElementById('voteTopicFilter').value ||
+                          document.getElementById('voteYearFilter').value ||
+                          document.getElementById('voteChoiceFilter').value;
+
+        if (!hasFilters && alignmentData) {
+            // Use pre-computed alignment
+            const memberLastName = currentMember.full_name.split(' ').pop();
+            const pairs = alignmentData.alignment_pairs || [];
+
+            let memberPairs = pairs.filter(p =>
+                p.member1 === memberLastName || p.member2 === memberLastName
+            ).map(p => ({
+                otherMember: p.member1 === memberLastName ? p.member2 : p.member1,
+                agreementRate: p.agreement_rate,
+                sharedVotes: p.shared_votes,
+                agreements: p.agreements
+            }));
+
+            memberPairs.sort((a, b) => b.agreementRate - a.agreementRate);
+            displayAlignmentResults(memberPairs);
+        } else {
+            // Calculate alignment from filtered votes
+            calculateFilteredAlignment();
+        }
+    }
+
+    function calculateFilteredAlignment() {
+        if (filteredMemberVotes.length === 0) {
+            document.getElementById('mostAligned').innerHTML = '<p class="text-muted small">No votes match filters</p>';
+            document.getElementById('leastAligned').innerHTML = '<p class="text-muted small">No votes match filters</p>';
+            updateAlignmentSummary([]);
+            return;
+        }
+
+        // Check if we have loaded other council members' votes
+        const otherMemberIds = Object.keys(allCouncilVotes);
+        if (otherMemberIds.length === 0) {
+            // Fall back to pre-computed alignment with note
+            const memberLastName = currentMember.full_name.split(' ').pop();
+            if (alignmentData) {
+                const pairs = alignmentData.alignment_pairs || [];
+                let memberPairs = pairs.filter(p =>
+                    p.member1 === memberLastName || p.member2 === memberLastName
+                ).map(p => ({
+                    otherMember: p.member1 === memberLastName ? p.member2 : p.member1,
+                    agreementRate: p.agreement_rate,
+                    sharedVotes: p.shared_votes,
+                    agreements: p.agreements
+                }));
+                memberPairs.sort((a, b) => b.agreementRate - a.agreementRate);
+                displayAlignmentResults(memberPairs, true, 'Loading alignment data...');
+            }
+            return;
+        }
+
+        // Calculate alignment from filtered votes
+        // Get the vote_ids from the current member's filtered votes
+        const filteredVoteIds = new Set(filteredMemberVotes.map(v => v.vote_id));
+
+        // Build a map of current member's votes: vote_id -> vote_choice
+        const currentMemberChoices = {};
+        filteredMemberVotes.forEach(v => {
+            currentMemberChoices[v.vote_id] = v.vote_choice;
+        });
+
+        // Calculate alignment with each other council member
+        const memberPairs = [];
+
+        councilMembers.forEach(otherMember => {
+            if (otherMember.id === currentMember.id) return;
+
+            const otherVotes = allCouncilVotes[otherMember.id] || [];
+            let sharedVotes = 0;
+            let agreements = 0;
+
+            otherVotes.forEach(otherVote => {
+                // Only consider votes that are in the filtered set
+                if (filteredVoteIds.has(otherVote.vote_id)) {
+                    const currentChoice = currentMemberChoices[otherVote.vote_id];
+                    if (currentChoice && otherVote.vote_choice) {
+                        sharedVotes++;
+                        if (currentChoice === otherVote.vote_choice) {
+                            agreements++;
+                        }
+                    }
+                }
+            });
+
+            if (sharedVotes > 0) {
+                const agreementRate = ((agreements / sharedVotes) * 100).toFixed(1);
+                memberPairs.push({
+                    otherMember: otherMember.short_name || otherMember.full_name.split(' ').pop(),
+                    agreementRate: parseFloat(agreementRate),
+                    sharedVotes: sharedVotes,
+                    agreements: agreements
+                });
+            }
+        });
+
+        memberPairs.sort((a, b) => b.agreementRate - a.agreementRate);
+        displayAlignmentResults(memberPairs, true, `Based on ${filteredMemberVotes.length} filtered votes`);
+    }
+
+    function displayAlignmentResults(memberPairs, isFiltered = false, filterMessage = null) {
+        const filterNote = isFiltered && filterMessage
+            ? `<p class="text-muted small mb-2"><em>${filterMessage}</em></p>`
+            : '';
+
+        // Display most aligned (top 3)
+        const mostAligned = memberPairs.slice(0, 3);
+        document.getElementById('mostAligned').innerHTML = mostAligned.length > 0
+            ? filterNote + mostAligned.map(p => createAlignmentCard(p, 'success')).join('')
+            : '<p class="text-muted small">No alignment data available</p>';
+
+        // Display least aligned (bottom 3, reversed)
+        const leastAligned = memberPairs.slice(-3).reverse();
+        document.getElementById('leastAligned').innerHTML = leastAligned.length > 0
+            ? filterNote + leastAligned.map(p => createAlignmentCard(p, 'danger')).join('')
+            : '<p class="text-muted small">No alignment data available</p>';
+
+        // Update alignment summary progress bar
+        updateAlignmentSummary(memberPairs);
+    }
+
+    function updateAlignmentSummary(memberPairs) {
+        const alignmentBar = document.getElementById('alignmentBar');
+        const alignmentRange = document.getElementById('alignmentRange');
+
+        if (!memberPairs || memberPairs.length === 0) {
+            alignmentBar.style.width = '0%';
+            alignmentRange.textContent = '--';
+            return;
+        }
+
+        // Get min and max alignment percentages
+        const rates = memberPairs.map(p => p.agreementRate);
+        const minRate = Math.min(...rates);
+        const maxRate = Math.max(...rates);
+        const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+
+        // Set progress bar to average alignment
+        alignmentBar.style.width = avgRate + '%';
+
+        // Color the bar based on average alignment
+        alignmentBar.classList.remove('bg-success', 'bg-warning', 'bg-danger');
+        if (avgRate >= 80) {
+            alignmentBar.classList.add('bg-success');
+        } else if (avgRate >= 60) {
+            alignmentBar.classList.add('bg-warning');
+        } else {
+            alignmentBar.classList.add('bg-danger');
+        }
+
+        // Show range
+        alignmentRange.textContent = minRate === maxRate
+            ? `${minRate}%`
+            : `${minRate}-${maxRate}%`;
+    }
+
+    function createAlignmentCard(pair, colorClass) {
+        // Find the council member to link to
+        const member = councilMembers.find(m => m.full_name.includes(pair.otherMember));
+        const memberId = member ? member.id : null;
+
+        return `
+            <div class="alignment-card d-flex align-items-center justify-content-between p-2 mb-2 border rounded">
+                <div>
+                    ${memberId
+                        ? `<a href="council-member.html?id=${memberId}" class="text-decoration-none fw-medium">${escapeHtml(pair.otherMember)}</a>`
+                        : `<span class="fw-medium">${escapeHtml(pair.otherMember)}</span>`
+                    }
+                    <br>
+                    <small class="text-muted">${pair.sharedVotes} shared votes</small>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-${colorClass}">${pair.agreementRate}%</span>
+                </div>
+            </div>
+        `;
+    }
+
+    function showError(message, showRetry = false) {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('errorState').style.display = 'block';
+        document.getElementById('errorMessage').textContent = message;
+
+        // Add retry button if appropriate
+        const errorState = document.getElementById('errorState');
+        const existingRetry = errorState.querySelector('.btn-retry');
+        if (existingRetry) existingRetry.remove();
+
+        if (showRetry) {
+            const retryBtn = document.createElement('button');
+            retryBtn.className = 'btn btn-primary me-2 btn-retry';
+            retryBtn.innerHTML = '<i class="fas fa-redo me-1"></i>Try Again';
+            retryBtn.onclick = () => location.reload();
+            errorState.querySelector('.alert').after(retryBtn);
+        }
+    }
+
+    function getVoteBadge(choice) {
+        const badges = {
+            'AYE': '<span class="badge bg-success">Aye</span>',
+            'NAY': '<span class="badge bg-danger">Nay</span>',
+            'ABSTAIN': '<span class="badge bg-warning text-dark">Abstain</span>',
+            'ABSENT': '<span class="badge bg-secondary">Absent</span>',
+            'RECUSAL': '<span class="badge bg-info">Recusal</span>'
+        };
+        return badges[choice] || `<span class="badge bg-light text-dark">${escapeHtml(choice)}</span>`;
+    }
+
+    function getOutcomeBadge(outcome) {
+        const badges = {
+            'PASS': '<span class="badge bg-success" role="status">Passed</span>',
+            'FAIL': '<span class="badge bg-danger" role="status">Failed</span>',
+            'CONTINUED': '<span class="badge bg-info" role="status">Continued</span>',
+            'TABLED': '<span class="badge bg-warning text-dark" role="status">Tabled</span>',
+            'WITHDRAWN': '<span class="badge bg-secondary" role="status">Withdrawn</span>',
+            'REMOVED': '<span class="badge bg-secondary" role="status">Removed</span>'
+        };
+        return badges[outcome] || `<span class="badge bg-light text-dark" role="status">${outcome || 'Unknown'}</span>`;
+    }
+
+    function formatDate(dateStr) {
+        const date = new Date(dateStr + 'T00:00:00');
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function truncate(str, len) {
+        if (!str) return '';
+        const escaped = escapeHtml(str);
+        return escaped.length > len ? escaped.substring(0, len) + '...' : escaped;
+    }
+
+    function highlightSearch(text, query) {
+        if (!text || !query) return escapeHtml(text) || '';
+        const escaped = escapeHtml(text);
+        const escapedQuery = escapeHtml(query);
+        const regex = new RegExp(`(${escapeRegex(escapedQuery)})`, 'gi');
+        return escaped.replace(regex, '<mark>$1</mark>');
+    }
+
+    function escapeRegex(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+    </script>
+</body>
+</html>

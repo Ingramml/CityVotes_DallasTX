@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- PAGE TITLE: Uses {CityName} placeholder so each city deployment shows its own name -->
+    <title>Meeting Detail - CityVotes {CityName}</title>
+    <meta name="description" content="{CityName} City Council meeting details and voting records.">
+
+    <!-- Open Graph / Facebook
+         These meta tags control how the page appears when shared on social media.
+         Replace {CityName} with the actual city name during deployment. -->
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Meeting Detail - CityVotes {CityName}">
+    <meta property="og:description" content="{CityName} City Council meeting details and voting records.">
+    <meta property="og:site_name" content="CityVotes">
+
+    <!-- Twitter Card
+         Controls the Twitter/X card preview when this page URL is shared. -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Meeting Detail - CityVotes {CityName}">
+    <meta name="twitter:description" content="{CityName} City Council meeting details and voting records.">
+
+    <!-- Bootstrap 5.3 CSS (CDN) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <!-- Font Awesome 6 Icons (CDN) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" crossorigin="anonymous">
+    <!-- Custom Theme CSS
+         Each city has its own css/theme.css defining --city-primary, --city-accent,
+         bg-city-primary, text-city-primary, text-city-accent utility classes, etc. -->
+    <link href="css/theme.css" rel="stylesheet">
+</head>
+<body>
+    <!-- SKIP NAVIGATION
+         Accessibility feature: allows keyboard/screen-reader users to skip directly
+         to the main content area, bypassing the navbar and breadcrumb. -->
+    <a href="#main-content" class="visually-hidden-focusable skip-link">Skip to main content</a>
+
+    <!-- =======================================================================
+         NAVIGATION BAR
+         - Uses Bootstrap's navbar-expand-lg for responsive collapsing.
+         - bg-city-primary: city-specific primary background color defined in theme.css.
+         - Contains: brand logo, 5 nav links (Home, Council, Meetings, Votes, Search),
+           a Help button, and a city name indicator on the right.
+         - "Meetings" link has the "active" class since this is a meeting-related page.
+         - The city name badge in the navbar uses text-city-accent for the accent color.
+    ======================================================================= -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-city-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-vote-yea me-2"></i>CityVotes
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="council.html">
+                            <i class="fas fa-users me-1"></i>Council
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="meetings.html">
+                            <i class="fas fa-calendar me-1"></i>Meetings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="votes.html">
+                            <i class="fas fa-check-square me-1"></i>Votes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="agenda-search.html">
+                            <i class="fas fa-search me-1"></i>Search
+                        </a>
+                    </li>
+                </ul>
+                <a href="about.html" class="btn btn-outline-light btn-sm me-3">
+                    <i class="fas fa-question-circle me-1"></i>Help
+                </a>
+                <!-- City name indicator: shows which city this deployment is for.
+                     Uses text-city-accent for the city's accent/secondary color. -->
+                <span class="navbar-text text-city-accent">
+                    <i class="fas fa-map-marker-alt me-1"></i>{CityName}
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- =======================================================================
+         BREADCRUMB NAVIGATION
+         - Provides hierarchical context: Home > Meetings > [Meeting Date]
+         - Sits in a bg-light strip below the navbar.
+         - The last breadcrumb item (#breadcrumbDate) is populated dynamically by
+           JavaScript with the formatted meeting date (e.g., "Jan 15, 2025").
+         - Data source: meeting.meeting_date from the API, formatted via formatDate().
+    ======================================================================= -->
+    <nav class="bg-light py-2">
+        <div class="container">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                <li class="breadcrumb-item"><a href="meetings.html">Meetings</a></li>
+                <!-- #breadcrumbDate: JS populates this with formatDate(meeting.meeting_date).
+                     Shows short date like "Jan 15, 2025". Starts as "Loading..." until data arrives. -->
+                <li class="breadcrumb-item active" id="breadcrumbDate">Loading...</li>
+            </ol>
+        </div>
+    </nav>
+
+    <!-- =======================================================================
+         MAIN CONTENT AREA
+         - Bootstrap .container with vertical margin (my-4).
+         - Contains three mutually exclusive states:
+           1. #loadingState  - spinner shown while fetching data
+           2. #meetingDetail - the actual content (hidden until data loads)
+           3. #errorState    - error alert (hidden unless something goes wrong)
+         - JavaScript toggles visibility between these three states.
+    ======================================================================= -->
+    <main id="main-content" class="container my-4">
+
+        <!-- LOADING STATE
+             Shown by default while the API call is in progress.
+             Uses Bootstrap's spinner-border component. Hidden once data loads or errors. -->
+        <div id="loadingState" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+
+        <!-- =======================================================================
+             MEETING DETAIL (hidden until data loads successfully)
+             This is the primary content container. It has three sections:
+               1. Header row with meeting title, type, and document links
+               2. Stats row with three summary cards
+               3. Agenda items card with a list-group of all items and votes
+        ======================================================================= -->
+        <div id="meetingDetail" style="display: none;">
+
+            <!-- ---------------------------------------------------------------
+                 MEETING HEADER
+                 - Full-width row (col-12) containing:
+                   - #meetingTitle / #meetingDate: The long-form meeting date
+                     (e.g., "Tuesday, January 15, 2025").
+                     Data field: meeting.meeting_date, formatted via formatDateLong().
+                   - #meetingType: The type of meeting (e.g., "Regular Meeting").
+                     Data field: meeting.meeting_type + " Meeting" suffix.
+                   - #documentLinks: Buttons linking to external documents.
+            --------------------------------------------------------------- -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h1 id="meetingTitle">
+                        <i class="fas fa-calendar-day me-2"></i>
+                        <!-- #meetingDate: Populated with formatDateLong(meeting.meeting_date) -->
+                        <span id="meetingDate">--</span>
+                    </h1>
+                    <!-- #meetingType: Shows meeting.meeting_type + " Meeting" -->
+                    <p class="text-muted mb-3" id="meetingType">--</p>
+
+                    <!-- DOCUMENT LINK BUTTONS
+                         Dynamically generated in displayMeeting(). Up to three buttons:
+                         - "View Agenda"  : shown if meeting.agenda_url is present
+                                            Links to the PDF/URL of the meeting agenda.
+                         - "View Minutes" : shown if meeting.minutes_url is present
+                                            Links to the PDF/URL of the meeting minutes.
+                         - "Watch Video"  : shown if meeting.video_url is present
+                                            Links to the video recording of the meeting.
+                         If none of these URLs exist, shows "No documents available" text.
+                         Each button opens in a new tab (target="_blank").
+                         Data fields: meeting.agenda_url, meeting.minutes_url, meeting.video_url -->
+                    <div id="documentLinks" class="mb-3">
+                        <!-- Populated by JavaScript: btn-outline-primary for agenda/minutes,
+                             btn-outline-danger for video. Each button has a Font Awesome icon. -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ---------------------------------------------------------------
+                 STATISTICS ROW - Three Summary Cards
+                 - Uses Bootstrap's 12-column grid: three col-md-4 columns
+                   (each 4/12 = one-third width on medium+ screens; full-width on mobile).
+                 - Each card is a centered Bootstrap .card with a colored heading number
+                   and a muted label underneath.
+
+                 Card 1 - Votes Taken (col-md-4):
+                   - #statVotes: Total number of votes in this meeting.
+                   - Data field: meeting.vote_count
+                   - Color: text-primary (Bootstrap blue)
+
+                 Card 2 - Passed (col-md-4):
+                   - #statPassed: Number of agenda items whose vote outcome was "PASS".
+                   - Data field: Computed by filtering meeting.agenda_items where
+                     item.vote.outcome === 'PASS'.
+                   - Color: text-success (Bootstrap green)
+
+                 Card 3 - Agenda Items (col-md-4):
+                   - #statItems: Total number of agenda items in the meeting.
+                   - Data field: meeting.agenda_items.length
+                   - Color: text-info (Bootstrap cyan/teal)
+            --------------------------------------------------------------- -->
+            <div class="row mb-4">
+                <div class="col-md-4 mb-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-primary" id="statVotes">--</h3>
+                            <small class="text-muted">Votes Taken</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-success" id="statPassed">--</h3>
+                            <small class="text-muted">Passed</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-info" id="statItems">--</h3>
+                            <small class="text-muted">Agenda Items</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ---------------------------------------------------------------
+                 AGENDA ITEMS LIST
+                 - Wrapped in a Bootstrap .card with a header and a .list-group body.
+                 - The card-header shows "Agenda Items & Votes" with a list icon.
+                 - #agendaItems: A .list-group.list-group-flush container populated by
+                   JavaScript. Each item in meeting.agenda_items gets a .list-group-item.
+
+                 Each agenda item renders:
+                 - Left side (flex-grow-1):
+                   - item.item_number: shown as a badge (bg-light text-dark)
+                   - item.section: optional section label (small, text-muted)
+                   - item.title: the agenda item title (h6)
+                   - item.description: truncated to 150 chars (small, text-muted)
+
+                 - Right side (text-end, only if item.vote is not null):
+                   - Vote outcome badge: "Passed" (bg-success) or "Failed" (bg-danger)
+                     Data field: item.vote.outcome ("PASS" or "FAIL")
+                   - Vote tally: ayes-noes-abstain as colored numbers
+                     Data fields: item.vote.ayes, item.vote.noes, item.vote.abstain
+                   - "Details" link button: navigates to vote-detail.html?id={item.vote.id}
+
+                 - If item.vote is null, shows a "No vote" badge instead.
+
+                 Data source: meeting.agenda_items[] array from the API.
+                 Each element has: item_number, section, title, description, vote
+                 vote object has: id, outcome, ayes, noes, abstain
+            --------------------------------------------------------------- -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list-ol me-2"></i>Agenda Items & Votes</h5>
+                </div>
+                <div class="list-group list-group-flush" id="agendaItems">
+                    <!-- Populated by JavaScript displayMeeting() function.
+                         Each agenda item becomes a .list-group-item with flexbox layout. -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ERROR STATE
+             Shown when the API call fails or the meeting ID is invalid.
+             - #errorMessage: Text describing what went wrong.
+             - "Back to Meetings" button returns user to the meetings list.
+             - If the error is retryable (e.g., timeout), a retry button is dynamically
+               appended by JavaScript's showError() function. -->
+        <div id="errorState" style="display: none;">
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <span id="errorMessage">Failed to load meeting data.</span>
+            </div>
+            <a href="meetings.html" class="btn btn-primary">Back to Meetings</a>
+        </div>
+    </main>
+
+    <!-- =======================================================================
+         FOOTER
+         - Dark background (bg-dark) with light text, padding, and top margin.
+         - col-md-6: occupies half the row on medium+ screens.
+         - Shows the CityVotes brand name with {CityName} for the city-specific tagline.
+         - Second line credits the official data source.
+         - Replace {CityName} with the actual city name during deployment.
+    ======================================================================= -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>CityVotes - {CityName} Voting Transparency</h6>
+                    <p class="text-muted mb-0">Data sourced from official {CityName} city council meeting records.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5.3 JS Bundle (includes Popper.js for dropdowns/tooltips) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <!-- Static Data API
+         Provides CityVotesAPI object with methods like getMeeting(id).
+         Returns meeting data including agenda_items, vote_count, document URLs, etc. -->
+    <script src="js/api.js"></script>
+
+    <!-- =======================================================================
+         PAGE JAVASCRIPT
+         - On DOMContentLoaded, reads the "id" query parameter from the URL.
+         - Calls CityVotesAPI.getMeeting(meetingId) to fetch meeting data.
+         - On success: hides loading spinner, populates all DOM elements.
+         - On failure: hides loading spinner, shows error state with message.
+         - Helper functions: formatDate, formatDateLong, escapeHtml, truncate.
+    ======================================================================= -->
+    <script>
+    document.addEventListener('DOMContentLoaded', async function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const meetingId = urlParams.get('id');
+
+        if (!meetingId) {
+            showError('No meeting ID provided');
+            return;
+        }
+
+        await loadMeeting(meetingId);
+    });
+
+    async function loadMeeting(meetingId) {
+        try {
+            const data = await CityVotesAPI.getMeeting(meetingId);
+
+            if (data.success) {
+                displayMeeting(data.meeting);
+            } else {
+                showError('Meeting not found. The meeting ID may be invalid.');
+            }
+        } catch (error) {
+            console.error('Error loading meeting:', error);
+            // Provide specific error messages based on error type
+            if (error.message.includes('Invalid')) {
+                showError(error.message);
+            } else if (error.message.includes('Not found')) {
+                showError('Meeting not found. Please check the ID and try again.');
+            } else if (error.message.includes('timed out')) {
+                showError('Request timed out. Please check your connection and try again.', true);
+            } else {
+                showError('Failed to load meeting data. Please try again later.', true);
+            }
+        }
+    }
+
+    function displayMeeting(meeting) {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('meetingDetail').style.display = 'block';
+
+        const dateStr = formatDateLong(meeting.meeting_date);
+        document.getElementById('meetingDate').textContent = dateStr;
+        document.getElementById('breadcrumbDate').textContent = formatDate(meeting.meeting_date);
+        document.getElementById('meetingType').textContent = `${meeting.meeting_type} Meeting`;
+        document.title = `${formatDate(meeting.meeting_date)} Meeting - CityVotes {CityName}`;
+
+        // Document links
+        let links = '';
+        if (meeting.agenda_url) {
+            links += `<a href="${meeting.agenda_url}" target="_blank" class="btn btn-outline-primary me-2 mb-2">
+                <i class="fas fa-file-alt me-1"></i>View Agenda
+            </a>`;
+        }
+        if (meeting.minutes_url) {
+            links += `<a href="${meeting.minutes_url}" target="_blank" class="btn btn-outline-primary me-2 mb-2">
+                <i class="fas fa-file-lines me-1"></i>View Minutes
+            </a>`;
+        }
+        if (meeting.video_url) {
+            links += `<a href="${meeting.video_url}" target="_blank" class="btn btn-outline-danger me-2 mb-2">
+                <i class="fas fa-video me-1"></i>Watch Video
+            </a>`;
+        }
+        document.getElementById('documentLinks').innerHTML = links || '<span class="text-muted">No documents available</span>';
+
+        // Stats
+        const passedCount = meeting.agenda_items.filter(item => item.vote && item.vote.outcome === 'PASS').length;
+        document.getElementById('statVotes').textContent = meeting.vote_count;
+        document.getElementById('statPassed').textContent = passedCount;
+        document.getElementById('statItems').textContent = meeting.agenda_items.length;
+
+        // Agenda items
+        const agendaList = document.getElementById('agendaItems');
+        agendaList.innerHTML = meeting.agenda_items.map(item => {
+            const hasVote = item.vote !== null;
+            return `
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-1">
+                                <span class="badge bg-light text-dark me-2">${item.item_number}</span>
+                                ${item.section ? `<small class="text-muted me-2">${item.section}</small>` : ''}
+                            </div>
+                            <h6 class="mb-1">${item.title || 'No title'}</h6>
+                            ${item.description ? `<p class="text-muted small mb-0">${truncate(item.description, 150)}</p>` : ''}
+                        </div>
+                        ${hasVote ? `
+                            <div class="text-end ms-3">
+                                <span class="badge ${item.vote.outcome === 'PASS' ? 'bg-success' : 'bg-danger'} mb-1" role="status">${item.vote.outcome === 'PASS' ? 'Passed' : 'Failed'}</span>
+                                <div class="small">
+                                    <span class="text-success">${item.vote.ayes}</span>-<span class="text-danger">${item.vote.noes}</span>-<span class="text-secondary">${item.vote.abstain}</span>
+                                </div>
+                                <a href="vote-detail.html?id=${item.vote.id}" class="btn btn-sm btn-outline-primary mt-1" aria-label="View vote details for item ${escapeHtml(item.item_number)}">
+                                    <i class="fas fa-eye" aria-hidden="true"></i> Details
+                                </a>
+                            </div>
+                        ` : '<span class="badge bg-light text-dark">No vote</span>'}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function showError(message, showRetry = false) {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('errorState').style.display = 'block';
+        document.getElementById('errorMessage').textContent = message;
+
+        // Add retry button if appropriate
+        const errorState = document.getElementById('errorState');
+        const existingRetry = errorState.querySelector('.btn-retry');
+        if (existingRetry) existingRetry.remove();
+
+        if (showRetry) {
+            const retryBtn = document.createElement('button');
+            retryBtn.className = 'btn btn-primary me-2 btn-retry';
+            retryBtn.innerHTML = '<i class="fas fa-redo me-1"></i>Try Again';
+            retryBtn.onclick = () => location.reload();
+            errorState.querySelector('.alert').after(retryBtn);
+        }
+    }
+
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function formatDateLong(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
+    // HTML escape function for safe display
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function truncate(str, len) {
+        if (!str) return '';
+        const escaped = escapeHtml(str);
+        return escaped.length > len ? escaped.substring(0, len) + '...' : escaped;
+    }
+    </script>
+</body>
+</html>

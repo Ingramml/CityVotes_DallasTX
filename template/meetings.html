@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- REPLACE: {CityName} with your city's name -->
+    <title>Meetings - CityVotes {CityName}</title>
+    <meta name="description" content="{CityName} City Council meeting history with agenda and voting records.">
+
+    <!--
+    ================================================================
+    OPEN GRAPH / SOCIAL SHARING META TAGS
+    These control how the page appears when shared on Facebook, Twitter, etc.
+    REPLACE: {CityName} in og:title and og:description
+    ================================================================
+    -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Meetings - CityVotes {CityName}">
+    <meta property="og:description" content="{CityName} City Council meeting history with agenda and voting records.">
+    <meta property="og:site_name" content="CityVotes">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Meetings - CityVotes {CityName}">
+    <meta name="twitter:description" content="{CityName} City Council meeting history with agenda and voting records.">
+
+    <!--
+    ================================================================
+    SCHEMA.ORG STRUCTURED DATA (JSON-LD)
+    Helps search engines understand this page as a list of meetings.
+    Data fields:
+      - name: "{CityName} City Council Meetings"
+      - description: summary of meeting data
+      - itemListElement: populated dynamically by JS (not pre-filled)
+    REPLACE: {CityName}
+    ================================================================
+    -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": "{CityName} City Council Meetings",
+        "description": "{CityName} City Council meeting history with agenda items and voting records",
+        "itemListElement": []
+    }
+    </script>
+
+    <!--
+    ================================================================
+    CSS DEPENDENCIES
+    1. Bootstrap 5.3.0 - Grid system, components, utilities
+    2. Font Awesome 6.4.0 - Icons (fa-calendar, fa-file-alt, etc.)
+    3. Theme CSS - City-specific colors via CSS custom properties
+       (edit css/theme.css to change --city-primary and --city-accent)
+    NOTE: SRI integrity attributes removed for cleaner template usage.
+    ================================================================
+    -->
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- THEME: City-specific colors and styles -->
+    <link href="css/theme.css" rel="stylesheet">
+</head>
+<body>
+    <!--
+    ================================================================
+    SKIP NAVIGATION LINK (Accessibility)
+    Hidden off-screen by default. Becomes visible on Tab/keyboard focus.
+    Jumps the user past the navigation bar to #main-content.
+    Styled by .skip-link in theme.css.
+    ================================================================
+    -->
+    <a href="#main-content" class="visually-hidden-focusable skip-link">Skip to main content</a>
+
+    <!--
+    ================================================================
+    NAVIGATION BAR
+    Shared across all pages. Copy this block to every page.
+
+    Layout:
+      - navbar-expand-lg: collapses to hamburger below 992px
+      - bg-city-primary: uses --city-primary from theme.css
+      - container: max-width centered content (1140px on xl screens)
+
+    Structure:
+      - Brand link (left): icon + "CityVotes" text -> index.html
+      - Hamburger toggle (visible < 992px)
+      - Nav links (center-left): Home, Council, Meetings (active), Votes, Search
+      - Help button (right): outline-light btn -> about.html
+      - City name badge (far right): text-city-accent with map pin icon
+
+    REPLACE: {CityName} in the navbar-text span
+    Set class="nav-link active" on the Meetings link for this page.
+    ================================================================
+    -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-city-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-vote-yea me-2"></i>CityVotes
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <!-- Set class="nav-link active" on the current page's link -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="council.html">
+                            <i class="fas fa-users me-1"></i>Council
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <!-- ACTIVE: This is the Meetings page -->
+                        <a class="nav-link active" href="meetings.html">
+                            <i class="fas fa-calendar me-1"></i>Meetings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="votes.html">
+                            <i class="fas fa-check-square me-1"></i>Votes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="agenda-search.html">
+                            <i class="fas fa-search me-1"></i>Search
+                        </a>
+                    </li>
+                </ul>
+                <a href="about.html" class="btn btn-outline-light btn-sm me-3">
+                    <i class="fas fa-question-circle me-1"></i>Help
+                </a>
+                <!-- REPLACE: {CityName} -->
+                <span class="navbar-text text-city-accent">
+                    <i class="fas fa-map-marker-alt me-1"></i>{CityName}
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <!--
+    ================================================================
+    PAGE HEADER
+    Layout: bg-light full-width band with py-4 vertical padding
+    Contains: H1 with calendar icon + subtitle paragraph
+
+    This is a simple, non-hero header used on interior pages (Meetings,
+    Council, Votes, etc.) as opposed to the gradient hero on the Home page.
+    ================================================================
+    -->
+    <header class="bg-light py-4">
+        <div class="container">
+            <h1><i class="fas fa-calendar me-2"></i>City Council Meetings</h1>
+            <p class="text-muted mb-0">Complete meeting history with agenda items and voting records</p>
+        </div>
+    </header>
+
+    <!--
+    ================================================================
+    MAIN CONTENT AREA
+    Layout: Bootstrap container with my-4 (margin-top/bottom: 1.5rem)
+    ID "main-content" is the target of the skip-navigation link.
+
+    Contains three sections:
+      1. Filter Row - Year dropdown + 3 KPI stat cards
+      2. Meetings List - Paginated list of meeting items
+      3. Pagination - Page navigation controls
+    ================================================================
+    -->
+    <main id="main-content" class="container my-4">
+
+        <!--
+        ================================================================
+        FILTER ROW
+        Layout: Bootstrap row with 4 equal columns (col-md-3 each)
+        On mobile, columns stack vertically (col-md-3 -> full width < 768px)
+
+        Column 1: Year filter dropdown
+          - <select> with id="yearFilter"
+          - Default option "All Years" (value="")
+          - Additional <option> elements populated by JS from
+            meetings.json -> available_years[] array
+          - onchange triggers filterByYear() which updates URL params
+            and re-renders the meeting list
+
+        Columns 2-4: KPI summary cards
+          - Each is a Bootstrap card with text-center and h-100 (equal height)
+          - Semi-transparent background with light border
+          - Contains an <h4> for the value and <small> for the label
+
+        KPI Card data sources (from stats.json via CityVotesAPI.getStats()):
+          Column 2: #totalMeetings -> stats.total_meetings (integer)
+                    Updated by renderMeetings() to show filtered count
+          Column 3: #totalVotes -> stats.total_votes (integer, formatted with commas)
+                    Updated by renderMeetings() to show filtered sum
+          Column 4: #dateRange -> stats.date_range.start / .end (ISO date strings)
+                    Displays year or year range (e.g., "2024" or "2023-2024")
+                    Updated by renderMeetings() based on filtered date range
+        ================================================================
+        -->
+        <div class="row mb-4">
+            <!-- Column 1: Year Filter Dropdown -->
+            <div class="col-md-3">
+                <label for="yearFilter" class="form-label">Filter by Year</label>
+                <select class="form-select" id="yearFilter" onchange="filterByYear()">
+                    <option value="">All Years</option>
+                    <!--
+                    Additional <option> elements are dynamically appended here
+                    by loadMeetings() from meetings.json -> available_years[]
+                    Each option: <option value="2024">2024</option>
+                    -->
+                </select>
+            </div>
+
+            <!--
+            Column 2: Total Meetings KPI
+            Data: Initially loaded from stats.json -> stats.total_meetings
+            Updated dynamically: renderMeetings() recalculates based on
+            filteredMeetings.length when a year filter is applied
+            Color: text-primary (Bootstrap blue)
+            -->
+            <div class="col-md-3">
+                <div class="card text-center h-100" style="background: rgba(255,255,255,0.1); border-color: rgba(0,0,0,0.1);">
+                    <div class="card-body py-2">
+                        <h4 class="text-primary mb-0" id="totalMeetings">--</h4>
+                        <small class="text-muted">Meetings</small>
+                    </div>
+                </div>
+            </div>
+
+            <!--
+            Column 3: Total Votes KPI
+            Data: Initially loaded from stats.json -> stats.total_votes
+            Updated dynamically: renderMeetings() sums vote_count across
+            filtered meetings using reduce()
+            Color: text-success (Bootstrap green)
+            Format: Number with locale-aware thousands separator (toLocaleString)
+            -->
+            <div class="col-md-3">
+                <div class="card text-center h-100" style="background: rgba(255,255,255,0.1); border-color: rgba(0,0,0,0.1);">
+                    <div class="card-body py-2">
+                        <h4 class="text-success mb-0" id="totalVotes">--</h4>
+                        <small class="text-muted">Total Votes</small>
+                    </div>
+                </div>
+            </div>
+
+            <!--
+            Column 4: Date Range KPI
+            Data: Initially loaded from stats.json -> stats.date_range.start / .end
+            Updated dynamically: renderMeetings() recalculates from filtered
+            meetings' meeting_date fields, sorted ascending
+            Color: text-info (Bootstrap cyan)
+            Display: Single year ("2024") or range ("2023-2024")
+            -->
+            <div class="col-md-3">
+                <div class="card text-center h-100" style="background: rgba(255,255,255,0.1); border-color: rgba(0,0,0,0.1);">
+                    <div class="card-body py-2">
+                        <h4 class="text-info mb-0" id="dateRange">--</h4>
+                        <small class="text-muted">Date Range</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--
+        ================================================================
+        MEETINGS LIST
+        Layout: Bootstrap card with list-group-flush (borderless list items)
+
+        Card Header:
+          - <h5> with list icon and "All Meetings" title
+
+        List Group (#meetingsList):
+          - Initially shows a loading spinner (spinner-border)
+          - Populated by renderMeetings() with meeting items from
+            meetings.json -> meetings[] array
+
+        Each meeting list item is rendered as:
+          <a> with class="list-group-item list-group-item-action"
+          Links to: meeting-detail.html?id={meeting.id}
+
+          Layout: Bootstrap row with 2 columns
+            Left column (col):
+              - <h5>: Calendar icon + formatted date
+                Data: meeting.meeting_date (ISO string -> formatted via formatDate())
+              - <p>: Meeting type text
+                Data: meeting.meeting_type (e.g., "Regular", "Special")
+              - <div>: Document availability badges (conditionally rendered)
+                - Agenda badge: shown if meeting.agenda_url is truthy
+                  Links to: meeting.agenda_url (opens in new tab)
+                  onclick="event.stopPropagation()" prevents parent link activation
+                - Minutes badge: shown if meeting.minutes_url is truthy
+                  Links to: meeting.minutes_url (opens in new tab)
+                - Video badge: shown if meeting.video_url is truthy
+                  Links to: meeting.video_url (opens in new tab)
+                  Uses bg-danger (red) to distinguish from document badges
+
+            Right column (col-auto text-end):
+              - Vote count badge: bg-primary rounded-pill
+                Data: meeting.vote_count (integer)
+              - Agenda item count: small text-muted
+                Data: meeting.agenda_item_count (integer)
+
+        Empty state:
+          - Calendar-times icon + "No meetings found" message
+          - Appends year if filter is active: "No meetings found for 2024"
+        ================================================================
+        -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i>All Meetings</h5>
+            </div>
+            <div class="list-group list-group-flush" id="meetingsList">
+                <!--
+                Loading spinner: displayed while meetings.json is being fetched.
+                Replaced entirely by renderMeetings() once data is available.
+                -->
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--
+        ================================================================
+        PAGINATION
+        Layout: Bootstrap pagination component, centered (justify-content-center)
+        Initially hidden (display: none), shown by updatePagination() when
+        there are more meetings than pageSize (10 per page).
+
+        Structure:
+          - Previous button: disabled on first page (page 0)
+          - Page number buttons: shows first, last, and +/-2 pages around current
+            Uses ellipsis (...) for gaps between visible page numbers
+          - Next button: disabled on last page
+
+        Each page link calls renderMeetings(offset) where offset = page * pageSize
+        URL is NOT updated on pagination (only on year filter change).
+        ================================================================
+        -->
+        <nav class="mt-4" id="paginationNav" style="display: none;">
+            <ul class="pagination justify-content-center" id="pagination">
+            </ul>
+        </nav>
+    </main>
+
+    <!--
+    ================================================================
+    FOOTER
+    Shared across all pages. Copy this block to every page.
+
+    Layout: bg-dark full-width band with py-4 padding, mt-5 top margin
+    Bootstrap row with 3 columns:
+      - col-md-6: App name + data source attribution
+        REPLACE: {CityName} in both the <h6> and <p> text
+      - col-md-4: "Want a different city?" call-to-action
+        Link styled with text-city-accent (uses --city-accent from theme.css)
+      - col-md-2: Data year indicator (static text)
+
+    REPLACE: {CityName} in the heading and paragraph
+    ================================================================
+    -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <!-- REPLACE: {CityName} -->
+                    <h6>CityVotes - {CityName} Voting Transparency</h6>
+                    <p class="text-muted mb-0">Data sourced from official {CityName} city council meeting records.</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <p class="mb-0">Want a different city? <a href="contact.html" class="text-city-accent">Contact us</a></p>
+                </div>
+                <div class="col-md-2 text-end">
+                    <span class="text-muted">-- Data</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!--
+    ================================================================
+    JAVASCRIPT DEPENDENCIES
+    1. Bootstrap 5.3.0 Bundle - Includes Popper.js for dropdowns/tooltips
+       Required for: navbar collapse (hamburger menu), tooltips, modals
+    2. Static Data API (js/api.js) - CityVotesAPI object that loads JSON data
+       Provides: CityVotesAPI.getStats(), CityVotesAPI.getMeetings(), etc.
+       Data files expected in: data/ directory (stats.json, meetings.json)
+    NOTE: SRI integrity attributes removed for cleaner template usage.
+    ================================================================
+    -->
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Static Data API -->
+    <script src="js/api.js"></script>
+
+    <!--
+    ================================================================
+    PAGE SCRIPT - MEETINGS LIST
+    ================================================================
+
+    STATE VARIABLES:
+      allMeetings  - Array of all meeting objects from meetings.json
+      currentPage  - Current page index (0-based), updated by renderMeetings()
+      pageSize     - Number of meetings per page (10)
+      currentYear  - Currently selected year filter (null = all years)
+
+    INITIALIZATION (DOMContentLoaded):
+      1. Reads ?year=XXXX from URL query string (if present)
+      2. Loads stats and meetings in parallel via Promise.all()
+
+    FUNCTIONS:
+      filterByYear()     - Called by year dropdown onchange
+                           Reads selected year from #yearFilter dropdown
+                           Updates browser URL with pushState (no page reload)
+                           Calls renderMeetings(0) to reset to first page
+
+      loadStats()        - Fetches stats.json via CityVotesAPI.getStats()
+                           Populates KPI cards: #totalMeetings, #totalVotes, #dateRange
+                           Data mapping:
+                             stats.total_meetings -> #totalMeetings.textContent
+                             stats.total_votes -> #totalVotes.textContent (formatted)
+                             stats.date_range.start/end -> #dateRange.textContent
+
+      loadMeetings()     - Fetches meetings.json via CityVotesAPI.getMeetings()
+                           Stores all meetings in allMeetings[]
+                           Populates year filter dropdown from data.available_years[]
+                           Pre-selects year if ?year= URL param was set
+                           Calls renderMeetings(0) to display first page
+
+      renderMeetings(offset)
+                         - Core rendering function, called on every filter/page change
+                           1. Filters allMeetings[] by currentYear (if set)
+                           2. Updates all 3 KPI cards based on filtered results:
+                              - #totalMeetings = filteredMeetings.length
+                              - #totalVotes = sum of vote_count across filtered meetings
+                              - #dateRange = year range from min/max meeting_date
+                           3. Slices filtered array for pagination: [offset, offset+pageSize]
+                           4. Renders HTML for each meeting item (or empty state)
+                           5. Calls updatePagination()
+
+                           Meeting object fields used in rendering:
+                             meeting.id             -> URL param for meeting-detail.html
+                             meeting.meeting_date   -> Formatted date display (formatDate)
+                             meeting.meeting_type   -> Type label (e.g., "Regular Meeting")
+                             meeting.agenda_url     -> Agenda document link (conditional)
+                             meeting.minutes_url    -> Minutes document link (conditional)
+                             meeting.video_url      -> Video recording link (conditional)
+                             meeting.vote_count     -> Vote count badge
+                             meeting.agenda_item_count -> Agenda items count
+
+      updatePagination(total, currentOffset)
+                         - Builds pagination HTML based on total items and current offset
+                           Hides pagination if total <= pageSize (single page)
+                           Shows: Previous | page numbers with ellipsis | Next
+                           Page numbers shown: first, last, and +/-2 around current page
+                           Ellipsis (...) inserted where pages are skipped
+
+      formatDate(dateStr)
+                         - Converts ISO date string to readable format
+                           Output: "Monday, January 1, 2024" (weekday, month, day, year)
+                           Uses toLocaleDateString('en-US') with full weekday
+    ================================================================
+    -->
+    <script>
+    let allMeetings = [];
+    let currentPage = 0;
+    const pageSize = 10;
+    let currentYear = null;
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        // Check URL params for year filter
+        const urlParams = new URLSearchParams(window.location.search);
+        const yearParam = urlParams.get('year');
+        if (yearParam) {
+            currentYear = parseInt(yearParam);
+        }
+
+        await Promise.all([
+            loadStats(),
+            loadMeetings()
+        ]);
+    });
+
+    function filterByYear() {
+        const yearSelect = document.getElementById('yearFilter');
+        currentYear = yearSelect.value ? parseInt(yearSelect.value) : null;
+
+        // Update URL
+        if (currentYear) {
+            window.history.pushState({}, '', `?year=${currentYear}`);
+        } else {
+            window.history.pushState({}, '', window.location.pathname);
+        }
+
+        renderMeetings(0);
+    }
+
+    async function loadStats() {
+        try {
+            const data = await CityVotesAPI.getStats();
+
+            if (data.success) {
+                document.getElementById('totalMeetings').textContent = data.stats.total_meetings;
+                document.getElementById('totalVotes').textContent = data.stats.total_votes.toLocaleString();
+
+                if (data.stats.date_range.start && data.stats.date_range.end) {
+                    const start = new Date(data.stats.date_range.start).getFullYear();
+                    const end = new Date(data.stats.date_range.end).getFullYear();
+                    document.getElementById('dateRange').textContent = start === end ? start : `${start}-${end}`;
+                }
+            }
+        } catch (error) {
+            console.error('Error loading stats:', error);
+        }
+    }
+
+    async function loadMeetings() {
+        try {
+            const data = await CityVotesAPI.getMeetings();
+
+            if (data.success) {
+                allMeetings = data.meetings;
+
+                // Populate year filter dropdown
+                const yearSelect = document.getElementById('yearFilter');
+                if (data.available_years && yearSelect.options.length <= 1) {
+                    data.available_years.forEach(year => {
+                        const option = document.createElement('option');
+                        option.value = year;
+                        option.textContent = year;
+                        if (year === currentYear) option.selected = true;
+                        yearSelect.appendChild(option);
+                    });
+                }
+
+                renderMeetings(0);
+            }
+        } catch (error) {
+            console.error('Error loading meetings:', error);
+            document.getElementById('meetingsList').innerHTML = `
+                <div class="list-group-item">
+                    <div class="alert alert-danger mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Failed to load meetings.
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    function renderMeetings(offset = 0) {
+        currentPage = Math.floor(offset / pageSize);
+
+        // Filter by year if selected
+        let filteredMeetings = allMeetings;
+        if (currentYear) {
+            filteredMeetings = allMeetings.filter(m => {
+                const meetingYear = new Date(m.meeting_date).getFullYear();
+                return meetingYear === currentYear;
+            });
+        }
+
+        // Update all KPIs based on filtered meetings
+        document.getElementById('totalMeetings').textContent = filteredMeetings.length;
+
+        // Calculate total votes for filtered meetings
+        const filteredTotalVotes = filteredMeetings.reduce((sum, m) => sum + (m.vote_count || 0), 0);
+        document.getElementById('totalVotes').textContent = filteredTotalVotes.toLocaleString();
+
+        // Calculate date range for filtered meetings
+        if (filteredMeetings.length > 0) {
+            const dates = filteredMeetings.map(m => new Date(m.meeting_date)).sort((a, b) => a - b);
+            const startYear = dates[0].getFullYear();
+            const endYear = dates[dates.length - 1].getFullYear();
+            document.getElementById('dateRange').textContent = startYear === endYear ? startYear : `${startYear}-${endYear}`;
+        } else {
+            document.getElementById('dateRange').textContent = '--';
+        }
+
+        // Paginate
+        const paginatedMeetings = filteredMeetings.slice(offset, offset + pageSize);
+
+        const list = document.getElementById('meetingsList');
+        if (paginatedMeetings.length === 0) {
+            list.innerHTML = `
+                <div class="list-group-item text-center py-4 text-muted">
+                    <i class="fas fa-calendar-times fa-2x mb-2"></i>
+                    <p class="mb-0">No meetings found${currentYear ? ` for ${currentYear}` : ''}</p>
+                </div>
+            `;
+        } else {
+            list.innerHTML = paginatedMeetings.map(meeting => `
+                <a href="meeting-detail.html?id=${meeting.id}" class="list-group-item list-group-item-action">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="mb-1">
+                                <i class="fas fa-calendar-day me-2 text-primary"></i>
+                                ${formatDate(meeting.meeting_date)}
+                            </h5>
+                            <p class="mb-1 text-muted">${meeting.meeting_type} Meeting</p>
+                            <div>
+                                ${meeting.agenda_url ? `<a href="${meeting.agenda_url}" target="_blank" class="badge bg-secondary me-1" onclick="event.stopPropagation()"><i class="fas fa-file-alt me-1"></i>Agenda</a>` : ''}
+                                ${meeting.minutes_url ? `<a href="${meeting.minutes_url}" target="_blank" class="badge bg-secondary me-1" onclick="event.stopPropagation()"><i class="fas fa-file-lines me-1"></i>Minutes</a>` : ''}
+                                ${meeting.video_url ? `<a href="${meeting.video_url}" target="_blank" class="badge bg-danger me-1" onclick="event.stopPropagation()"><i class="fas fa-video me-1"></i>Video</a>` : ''}
+                            </div>
+                        </div>
+                        <div class="col-auto text-end">
+                            <span class="badge bg-primary rounded-pill fs-6">${meeting.vote_count} votes</span>
+                            <div class="small text-muted mt-1">${meeting.agenda_item_count} agenda items</div>
+                        </div>
+                    </div>
+                </a>
+            `).join('');
+        }
+
+        // Update pagination
+        updatePagination(filteredMeetings.length, offset);
+    }
+
+    function updatePagination(total, currentOffset) {
+        const totalPages = Math.ceil(total / pageSize);
+        const currentPage = Math.floor(currentOffset / pageSize);
+
+        if (totalPages <= 1) {
+            document.getElementById('paginationNav').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('paginationNav').style.display = 'block';
+        const pagination = document.getElementById('pagination');
+
+        let html = '';
+
+        // Previous button
+        html += `<li class="page-item ${currentPage === 0 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="renderMeetings(${(currentPage - 1) * pageSize}); return false;">Previous</a>
+        </li>`;
+
+        // Page numbers
+        for (let i = 0; i < totalPages; i++) {
+            if (i === 0 || i === totalPages - 1 || Math.abs(i - currentPage) <= 2) {
+                html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="renderMeetings(${i * pageSize}); return false;">${i + 1}</a>
+                </li>`;
+            } else if (Math.abs(i - currentPage) === 3) {
+                html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            }
+        }
+
+        // Next button
+        html += `<li class="page-item ${currentPage === totalPages - 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="renderMeetings(${(currentPage + 1) * pageSize}); return false;">Next</a>
+        </li>`;
+
+        pagination.innerHTML = html;
+    }
+
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    </script>
+</body>
+</html>

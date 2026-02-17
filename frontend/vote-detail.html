@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vote Detail - CityVotes Dallas</title>
+    <meta name="description" content="Detailed voting record with individual council member votes.">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Vote Detail - CityVotes Dallas">
+    <meta property="og:description" content="Detailed voting record with individual council member votes.">
+    <meta property="og:site_name" content="CityVotes">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Vote Detail - CityVotes Dallas">
+    <meta name="twitter:description" content="Detailed voting record with individual council member votes.">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" crossorigin="anonymous">
+    <!-- Custom CSS: theme.css defines city-specific colors via CSS custom properties.
+         Key classes used on this page:
+           .bg-city-primary  - city brand primary color (navbar, accents)
+           .text-city-primary - primary color for text elements
+           .text-city-accent  - accent/highlight color (city name badge in navbar) -->
+    <link href="css/theme.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Skip Navigation: hidden link that becomes visible on keyboard focus,
+         allowing screen-reader and keyboard users to jump past the navbar
+         directly to #main-content. -->
+    <a href="#main-content" class="visually-hidden-focusable skip-link">Skip to main content</a>
+
+    <!-- =======================================================================
+         NAVIGATION BAR
+         - Uses .navbar-dark + .bg-city-primary for the city's branded header.
+         - Collapses into a hamburger menu on screens narrower than "lg" (992px).
+         - The "Votes" nav-link carries the .active class for this page.
+         - The city name is displayed at the far right using .text-city-accent.
+         ======================================================================= -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-city-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-vote-yea me-2"></i>CityVotes
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="council.html">
+                            <i class="fas fa-users me-1"></i>Council
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="meetings.html">
+                            <i class="fas fa-calendar me-1"></i>Meetings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="votes.html">
+                            <i class="fas fa-check-square me-1"></i>Votes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="agenda-search.html">
+                            <i class="fas fa-search me-1"></i>Search
+                        </a>
+                    </li>
+                </ul>
+                <a href="about.html" class="btn btn-outline-light btn-sm me-3">
+                    <i class="fas fa-question-circle me-1"></i>Help
+                </a>
+                <span class="navbar-text text-city-accent">
+                    <i class="fas fa-map-marker-alt me-1"></i>Dallas
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- =======================================================================
+         BREADCRUMB
+         - Sits in a .bg-light strip below the navbar for secondary navigation.
+         - Hierarchy: Home > Votes > [current item number].
+         - The final breadcrumb item (#breadcrumbItem) is dynamically populated
+           by JavaScript with the agenda item number once vote data loads.
+         ======================================================================= -->
+    <nav class="bg-light py-2">
+        <div class="container">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                <li class="breadcrumb-item"><a href="votes.html">Votes</a></li>
+                <li class="breadcrumb-item active" id="breadcrumbItem">Loading...</li>
+            </ol>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main id="main-content" class="container my-4">
+        <!-- Loading State: shown immediately on page load while the API call
+             is in progress. Hidden once data arrives or an error occurs. -->
+        <div id="loadingState" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+
+        <!-- ===================================================================
+             VOTE DETAIL CONTAINER
+             Initially hidden (display:none). JavaScript reveals this once vote
+             data is successfully fetched and parsed. All child elements use
+             ids that are populated by the displayVote() function.
+             =================================================================== -->
+        <div id="voteDetail" style="display: none;">
+
+            <!-- =============================================================
+                 HEADER SECTION: Item Number + Outcome Badge, Title, Description
+                 - Full-width row (col-12).
+                 - #itemNumber: displays the agenda item number in a neutral
+                   .badge.bg-light.text-dark pill.
+                 - #outcomeBadge: displays "PASS" or "FAIL". JavaScript sets
+                   .bg-success (green) for PASS, .bg-danger (red) for FAIL.
+                 - #voteTitle: <h1> with the motion/resolution title.
+                 - #voteDescription: optional paragraph with extra context,
+                   shown only when the vote record includes a description.
+                 - #meetingLink / #meetingDate: links to the parent meeting
+                   detail page (meeting-detail.html?id=...).
+                 - #meetingType: text label such as "Regular Meeting" or
+                   "Special Meeting".
+                 Data sources: vote.item_number, vote.title, vote.description,
+                 vote.meeting_date, vote.meeting_id, vote.meeting_type,
+                 vote.outcome.
+                 ============================================================= -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-light text-dark me-2 fs-5" id="itemNumber">--</span>
+                        <span class="badge fs-5" id="outcomeBadge">--</span>
+                    </div>
+                    <h1 id="voteTitle">--</h1>
+                    <div id="voteDescriptionContainer" style="display:none;">
+                        <p class="text-muted mb-1" id="voteDescriptionPreview"></p>
+                        <p class="text-muted mb-1" id="voteDescriptionFull" style="display:none; white-space:pre-line;"></p>
+                        <a href="#" id="descriptionToggle" class="small text-decoration-none" style="display:none;">Read more</a>
+                    </div>
+
+                    <!-- Meeting date link: clicking navigates to the full
+                         meeting-detail page. The pipe separator visually
+                         divides the date from the meeting type label. -->
+                    <div class="mb-3">
+                        <a href="#" id="meetingLink" class="text-decoration-none">
+                            <i class="fas fa-calendar-day me-1"></i>
+                            <span id="meetingDate">--</span>
+                        </a>
+                        <span class="text-muted mx-2">|</span>
+                        <span class="text-muted" id="meetingType">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =============================================================
+                 TALLY + INDIVIDUAL VOTES ROW
+                 Two equal-width cards on medium+ screens (col-md-6 each).
+                 On small screens they stack vertically (full width).
+                 ============================================================= -->
+            <div class="row mb-4">
+
+                <!-- =========================================================
+                     TALLY CARD (left column, col-md-6)
+                     Shows the aggregate vote counts and a stacked progress bar.
+
+                     Layout:
+                     - Card header with calculator icon and "Vote Tally" title.
+                     - Card body contains a 4-column grid (.row .text-center)
+                       with one column per vote category:
+                         Ayes    (#ayeCount)     - green  (.text-success)
+                         Noes    (#nayCount)     - red    (.text-danger)
+                         Abstain (#abstainCount) - yellow (.text-warning)
+                         Absent  (#absentCount)  - gray   (.text-secondary)
+                     - Below the counts, a Bootstrap .progress bar (30px tall)
+                       with four colored segments whose widths are set by JS
+                       as percentages of the total vote count:
+                         #ayeBar     .bg-success  (green)
+                         #nayBar     .bg-danger   (red)
+                         #abstainBar .bg-warning  (yellow)
+                         #absentBar  .bg-secondary (gray)
+
+                     Data sources: vote.ayes, vote.noes, vote.abstain,
+                     vote.absent. Percentages are computed as
+                     (count / total * 100).
+                     ========================================================= -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>Vote Tally</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Four count boxes in an equal-width row grid.
+                                 Each .col auto-sizes to 25% of the row. -->
+                            <div class="row text-center">
+                                <div class="col">
+                                    <h2 class="text-success" id="ayeCount">--</h2>
+                                    <small class="text-muted">Ayes</small>
+                                </div>
+                                <div class="col">
+                                    <h2 class="text-danger" id="nayCount">--</h2>
+                                    <small class="text-muted">Noes</small>
+                                </div>
+                                <div class="col">
+                                    <h2 class="text-warning" id="abstainCount">--</h2>
+                                    <small class="text-muted">Abstain</small>
+                                </div>
+                                <div class="col">
+                                    <h2 class="text-secondary" id="absentCount">--</h2>
+                                    <small class="text-muted">Absent</small>
+                                </div>
+                            </div>
+
+                            <!-- Visual progress bar: a single .progress container
+                                 holds four stacked .progress-bar segments.
+                                 Width of each segment = (count / total * 100)%.
+                                 Colors match the count boxes above. -->
+                            <div class="progress mt-4" style="height: 30px;">
+                                <div class="progress-bar bg-success" id="ayeBar" role="progressbar"></div>
+                                <div class="progress-bar bg-danger" id="nayBar" role="progressbar"></div>
+                                <div class="progress-bar bg-warning" id="abstainBar" role="progressbar"></div>
+                                <div class="progress-bar bg-secondary" id="absentBar" role="progressbar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- =========================================================
+                     INDIVIDUAL VOTES CARD (right column, col-md-6)
+                     Lists every council member with their vote choice badge.
+
+                     Layout:
+                     - Card header with users icon and "Individual Votes" title.
+                     - Card body (#memberVotes) is populated by JS with a
+                       series of .d-flex rows, each containing:
+                         - A link to the member's profile page
+                           (council-member.html?id=...) on the left.
+                         - A color-coded badge on the right showing the
+                           member's vote choice.
+
+                     Badge color coding (from getVoteBadge()):
+                       AYE     -> .badge.bg-success   (green)
+                       NAY     -> .badge.bg-danger    (red)
+                       ABSTAIN -> .badge.bg-warning.text-dark (yellow, dark text)
+                       ABSENT  -> .badge.bg-secondary (gray)
+                       RECUSAL -> .badge.bg-info      (light blue)
+                       other   -> .badge.bg-light.text-dark (neutral fallback)
+
+                     Data source: vote.member_votes[] array, each element has
+                     member_id, full_name, vote_choice.
+                     ========================================================= -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-users me-2"></i>Individual Votes</h5>
+                        </div>
+                        <div class="card-body" id="memberVotes">
+                            <!-- Populated by displayVote() JS function -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =============================================================
+                 VOTE BY CATEGORY - THREE GROUPED CARDS
+                 Three equal-width cards on medium+ screens (col-md-4 each).
+                 On small screens they stack vertically (full width).
+                 Each card groups members by their vote choice for quick
+                 at-a-glance viewing.
+
+                 Card 1 - "Voted Aye" (green)
+                   - .card.border-success with .card-header.bg-success.text-white
+                   - Body (#ayeVoters): links to members who voted AYE.
+                   - If none, shows "None" in muted text.
+
+                 Card 2 - "Voted Nay" (red)
+                   - .card.border-danger with .card-header.bg-danger.text-white
+                   - Body (#nayVoters): links to members who voted NAY.
+                   - If none, shows "None" in muted text.
+
+                 Card 3 - "Abstain/Absent" (gray)
+                   - .card.border-secondary with .card-header.bg-secondary.text-white
+                   - Body (#otherVoters): members who were ABSTAIN, ABSENT,
+                     RECUSAL, or any other non-AYE/NAY choice. Each entry
+                     shows the member name on the left and vote choice label
+                     on the right in muted small text.
+                   - If none, shows "None" in muted text.
+
+                 Data source: vote.member_votes[] filtered by vote_choice.
+                 ============================================================= -->
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="card border-success">
+                        <div class="card-header bg-success text-white">
+                            <i class="fas fa-check me-2"></i>Voted Aye
+                        </div>
+                        <div class="card-body" id="ayeVoters">
+                            <!-- Populated by displayVote(): list of member links -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card border-danger">
+                        <div class="card-header bg-danger text-white">
+                            <i class="fas fa-times me-2"></i>Voted Nay
+                        </div>
+                        <div class="card-body" id="nayVoters">
+                            <!-- Populated by displayVote(): list of member links -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card border-secondary">
+                        <div class="card-header bg-secondary text-white">
+                            <i class="fas fa-minus me-2"></i>Abstain/Absent
+                        </div>
+                        <div class="card-body" id="otherVoters">
+                            <!-- Populated by displayVote(): member name + vote choice label -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error State: shown when the API call fails or returns no data.
+             Contains a Bootstrap .alert-danger with a message and a "Back to
+             Votes" link. For network/timeout errors, a "Try Again" retry
+             button is dynamically injected by showError(). -->
+        <div id="errorState" style="display: none;">
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <span id="errorMessage">Failed to load vote data.</span>
+            </div>
+            <a href="votes.html" class="btn btn-primary">Back to Votes</a>
+        </div>
+    </main>
+
+    <!-- =======================================================================
+         FOOTER
+         - Dark background (.bg-dark.text-light) with city-specific branding.
+         - Left column (col-md-6) shows the CityVotes tagline with Dallas.
+         - Replace Dallas with the target city when deploying.
+         ======================================================================= -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>CityVotes - Dallas Voting Transparency</h6>
+                    <p class="text-muted mb-0">Data sourced from official Dallas city council meeting records.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle (includes Popper for dropdowns/tooltips) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <!-- Static Data API: provides CityVotesAPI object with methods like
+         getVote(id) that fetch vote records from local JSON data files. -->
+    <script src="js/api.js"></script>
+
+    <script>
+    /**
+     * Page initialization.
+     * Reads the "id" query parameter from the URL and loads the corresponding
+     * vote record via the CityVotesAPI. If no id is present, shows an error.
+     */
+    document.addEventListener('DOMContentLoaded', async function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const voteId = urlParams.get('id');
+
+        if (!voteId) {
+            showError('No vote ID provided');
+            return;
+        }
+
+        await loadVote(voteId);
+    });
+
+    /**
+     * Fetches a single vote record from the API and displays it,
+     * or shows an appropriate error message on failure.
+     */
+    async function loadVote(voteId) {
+        try {
+            const data = await CityVotesAPI.getVote(voteId);
+
+            if (data.success) {
+                displayVote(data.vote);
+            } else {
+                showError('Vote not found. The vote ID may be invalid or the record may have been removed.');
+            }
+        } catch (error) {
+            console.error('Error loading vote:', error);
+            // Provide specific error messages based on error type
+            if (error.message.includes('Invalid')) {
+                showError(error.message);
+            } else if (error.message.includes('Not found')) {
+                showError('Vote not found. Please check the vote ID and try again.');
+            } else if (error.message.includes('timed out')) {
+                showError('Request timed out. Please check your connection and try again.', true);
+            } else {
+                showError('Failed to load vote data. Please try again later.', true);
+            }
+        }
+    }
+
+    /**
+     * Populates every element on the page with data from the vote object.
+     * Hides the loading spinner and reveals the #voteDetail container.
+     *
+     * Data fields used:
+     *   vote.item_number   - agenda item identifier
+     *   vote.title         - motion/resolution title
+     *   vote.description   - optional longer description
+     *   vote.outcome       - "PASS" or "FAIL"
+     *   vote.meeting_date  - ISO date string
+     *   vote.meeting_id    - id for linking to meeting-detail page
+     *   vote.meeting_type  - e.g. "Regular", "Special"
+     *   vote.ayes          - count of aye votes
+     *   vote.noes          - count of nay votes
+     *   vote.abstain       - count of abstentions
+     *   vote.absent        - count of absences
+     *   vote.member_votes  - array of { member_id, full_name, vote_choice }
+     */
+    function displayVote(vote) {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('voteDetail').style.display = 'block';
+
+        // Header
+        document.getElementById('itemNumber').textContent = vote.item_number;
+        document.getElementById('breadcrumbItem').textContent = `Item ${vote.item_number}`;
+        document.getElementById('voteTitle').textContent = vote.title || 'No title';
+        document.title = `Item ${vote.item_number} - CityVotes Dallas`;
+
+        const outcomeBadge = document.getElementById('outcomeBadge');
+        outcomeBadge.textContent = vote.outcome;
+        outcomeBadge.className = `badge fs-5 ${vote.outcome === 'PASS' ? 'bg-success' : 'bg-danger'}`;
+
+        if (vote.description) {
+            const MAX_PREVIEW = 300;
+            const container = document.getElementById('voteDescriptionContainer');
+            const preview = document.getElementById('voteDescriptionPreview');
+            const full = document.getElementById('voteDescriptionFull');
+            const toggle = document.getElementById('descriptionToggle');
+            container.style.display = 'block';
+
+            if (vote.description.length > MAX_PREVIEW) {
+                preview.textContent = vote.description.substring(0, MAX_PREVIEW) + '...';
+                full.textContent = vote.description;
+                toggle.style.display = 'inline';
+                let expanded = false;
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    expanded = !expanded;
+                    preview.style.display = expanded ? 'none' : 'block';
+                    full.style.display = expanded ? 'block' : 'none';
+                    toggle.textContent = expanded ? 'Show less' : 'Read more';
+                });
+            } else {
+                preview.textContent = vote.description;
+            }
+        }
+
+        document.getElementById('meetingDate').textContent = formatDate(vote.meeting_date);
+        document.getElementById('meetingLink').href = `meeting-detail.html?id=${vote.meeting_id}`;
+        document.getElementById('meetingType').textContent = `${vote.meeting_type} Meeting`;
+
+        // Tally
+        document.getElementById('ayeCount').textContent = vote.ayes;
+        document.getElementById('nayCount').textContent = vote.noes;
+        document.getElementById('abstainCount').textContent = vote.abstain;
+        document.getElementById('absentCount').textContent = vote.absent;
+
+        const total = (vote.ayes + vote.noes + (vote.abstain || 0) + (vote.absent || 0)) || 1;
+        document.getElementById('ayeBar').style.width = `${(vote.ayes / total * 100)}%`;
+        document.getElementById('nayBar').style.width = `${(vote.noes / total * 100)}%`;
+        document.getElementById('abstainBar').style.width = `${(vote.abstain / total * 100)}%`;
+        document.getElementById('absentBar').style.width = `${(vote.absent / total * 100)}%`;
+
+        // Member votes list
+        const memberVotesDiv = document.getElementById('memberVotes');
+        memberVotesDiv.innerHTML = vote.member_votes.map(mv => `
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <a href="council-member.html?id=${mv.member_id}" class="text-decoration-none">
+                    ${mv.full_name}
+                </a>
+                ${getVoteBadge(mv.vote_choice)}
+            </div>
+        `).join('');
+
+        // Grouped by vote choice
+        const ayeVoters = vote.member_votes.filter(mv => mv.vote_choice === 'AYE');
+        const nayVoters = vote.member_votes.filter(mv => mv.vote_choice === 'NAY');
+        const otherVoters = vote.member_votes.filter(mv => !['AYE', 'NAY'].includes(mv.vote_choice));
+
+        document.getElementById('ayeVoters').innerHTML = ayeVoters.length > 0
+            ? ayeVoters.map(mv => `<a href="council-member.html?id=${mv.member_id}" class="d-block mb-1">${mv.full_name}</a>`).join('')
+            : '<span class="text-muted">None</span>';
+
+        document.getElementById('nayVoters').innerHTML = nayVoters.length > 0
+            ? nayVoters.map(mv => `<a href="council-member.html?id=${mv.member_id}" class="d-block mb-1">${mv.full_name}</a>`).join('')
+            : '<span class="text-muted">None</span>';
+
+        document.getElementById('otherVoters').innerHTML = otherVoters.length > 0
+            ? otherVoters.map(mv => `
+                <div class="d-flex justify-content-between mb-1">
+                    <a href="council-member.html?id=${mv.member_id}">${mv.full_name}</a>
+                    <small class="text-muted">${mv.vote_choice}</small>
+                </div>
+            `).join('')
+            : '<span class="text-muted">None</span>';
+    }
+
+    /**
+     * Shows the error state UI. Hides the loading spinner.
+     * @param {string} message - Error text to display.
+     * @param {boolean} showRetry - If true, adds a "Try Again" button that reloads the page.
+     */
+    function showError(message, showRetry = false) {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('errorState').style.display = 'block';
+        document.getElementById('errorMessage').textContent = message;
+
+        // Add retry button if appropriate
+        const errorState = document.getElementById('errorState');
+        const existingRetry = errorState.querySelector('.btn-retry');
+        if (existingRetry) existingRetry.remove();
+
+        if (showRetry) {
+            const retryBtn = document.createElement('button');
+            retryBtn.className = 'btn btn-primary me-2 btn-retry';
+            retryBtn.innerHTML = '<i class="fas fa-redo me-1"></i>Try Again';
+            retryBtn.onclick = () => location.reload();
+            errorState.querySelector('.alert').after(retryBtn);
+        }
+    }
+
+    /**
+     * Returns an HTML badge string color-coded by vote choice.
+     *
+     * Color coding:
+     *   AYE     -> green   (.bg-success)           - voted in favor
+     *   NAY     -> red     (.bg-danger)             - voted against
+     *   ABSTAIN -> yellow  (.bg-warning.text-dark)  - abstained from voting
+     *   ABSENT  -> gray    (.bg-secondary)          - was not present
+     *   RECUSAL -> blue    (.bg-info)               - recused due to conflict
+     *   other   -> neutral (.bg-light.text-dark)    - fallback for unknown choices
+     */
+    function getVoteBadge(choice) {
+        const badges = {
+            'AYE': '<span class="badge bg-success">Aye</span>',
+            'NAY': '<span class="badge bg-danger">Nay</span>',
+            'ABSTAIN': '<span class="badge bg-warning text-dark">Abstain</span>',
+            'ABSENT': '<span class="badge bg-secondary">Absent</span>',
+            'RECUSAL': '<span class="badge bg-info">Recusal</span>'
+        };
+        return badges[choice] || `<span class="badge bg-light text-dark">${choice}</span>`;
+    }
+
+    /**
+     * Formats an ISO date string into a human-readable long format.
+     * Example: "2024-03-05" -> "Tuesday, March 5, 2024"
+     */
+    function formatDate(dateStr) {
+        const date = new Date(dateStr + 'T00:00:00');
+        return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    </script>
+</body>
+</html>

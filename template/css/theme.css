@@ -1,0 +1,442 @@
+/*
+ * ==========================================================================
+ * CITYVOTES TEMPLATE - THEME CSS
+ * ==========================================================================
+ *
+ * HOW TO REBRAND:
+ * 1. Change the 5 color variables below to your city's colors
+ * 2. Update class names from "city-primary" / "city-accent" if desired
+ * 3. Everything else adapts automatically
+ *
+ * ==========================================================================
+ */
+
+/* ===== CITY COLORS - CHANGE THESE ===== */
+:root {
+    /* PRIMARY: Navbar, buttons, links, headings (use your city's main brand color) */
+    --city-primary: #1f4e79;
+    --city-primary-light: #2d6da3;
+    --city-primary-dark: #163a5c;
+
+    /* ACCENT: Active nav, highlights, footer border (a contrasting color) */
+    --city-accent: #f4b942;
+    --city-accent-light: #f7ca6e;
+
+    /* NEUTRAL: These usually don't need changing */
+    --color-success: #198754;
+    --color-danger: #dc3545;
+    --color-warning: #ffc107;
+    --color-info: #0dcaf0;
+    --color-secondary: #6c757d;
+    --color-light: #f8f9fa;
+    --color-dark: #212529;
+}
+
+
+/* ==========================================================================
+   BACKGROUND & TEXT UTILITIES
+   ========================================================================== */
+
+.bg-city-primary {
+    background-color: var(--city-primary) !important;
+}
+
+.bg-city-accent {
+    background-color: var(--city-accent) !important;
+}
+
+.text-city-primary {
+    color: var(--city-primary) !important;
+}
+
+.text-city-accent {
+    color: var(--city-accent) !important;
+}
+
+
+/* ==========================================================================
+   NAVIGATION BAR
+   Height: ~56px | Full-width | Sticky top optional
+   ========================================================================== */
+
+.navbar-dark.bg-city-primary {
+    background-color: var(--city-primary) !important;
+}
+
+.navbar-dark.bg-city-primary .navbar-brand:hover {
+    color: var(--city-accent) !important;
+}
+
+.navbar-dark.bg-city-primary .nav-link:hover {
+    color: var(--city-accent) !important;
+}
+
+.navbar-dark.bg-city-primary .nav-link.active {
+    color: var(--city-accent) !important;
+    border-bottom: 2px solid var(--city-accent);
+}
+
+
+/* ==========================================================================
+   HERO SECTION (Home page only)
+   Height: auto (~120px) | Full-width | Gradient background
+   ========================================================================== */
+
+.hero-section {
+    background: linear-gradient(135deg, var(--city-primary) 0%, var(--city-primary-dark) 100%);
+    color: white;
+}
+
+.hero-section h1 {
+    color: white;
+}
+
+.hero-section .lead {
+    color: var(--city-accent) !important;
+}
+
+
+/* ==========================================================================
+   STAT CARDS (KPI boxes)
+   Size: ~150px tall | Used in: Home (4), Meeting Detail (3), Council Member (4)
+   Layout: row of equal-width cards with padding
+   ========================================================================== */
+
+.stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;                     /* 24px internal padding */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.stat-card .stat-value {
+    font-size: 2.5rem;                   /* Large number display */
+    font-weight: 700;
+    color: var(--city-primary);
+}
+
+.stat-card .stat-label {
+    color: #6c757d;
+    font-size: 0.875rem;                 /* 14px */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+
+/* ==========================================================================
+   MINI STATS (inside council cards)
+   Size: compact | 3 across in a row
+   ========================================================================== */
+
+.stat-mini .value {
+    font-size: 1.5rem;                   /* 24px */
+    font-weight: 600;
+}
+
+.stat-mini .label {
+    font-size: 0.75rem;                  /* 12px */
+    color: #6c757d;
+}
+
+
+/* ==========================================================================
+   COUNCIL MEMBER CARDS
+   Size: ~350px tall | Layout: 3-col (lg), 2-col (md), 1-col (sm)
+   Grid class: col-lg-4 col-md-6 mb-4
+   ========================================================================== */
+
+.council-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.council-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.council-avatar {
+    width: 60px;                         /* Avatar circle size */
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* ==========================================================================
+   KPI CARD (Meetings page, Council Member page)
+   Size: compact stat box | Used in filter rows
+   ========================================================================== */
+
+.kpi-card {
+    border-left: 4px solid;
+}
+
+.kpi-card.meetings {
+    border-left-color: var(--city-primary);
+}
+
+.kpi-card.votes {
+    border-left-color: var(--color-success);
+}
+
+
+/* ==========================================================================
+   LINKS & BUTTONS
+   ========================================================================== */
+
+a {
+    color: var(--city-primary);
+}
+
+a:hover {
+    color: var(--city-primary-dark);
+}
+
+.btn-primary {
+    background-color: var(--city-primary);
+    border-color: var(--city-primary);
+}
+
+.btn-primary:hover {
+    background-color: var(--city-primary-dark);
+    border-color: var(--city-primary-dark);
+}
+
+.btn-outline-primary {
+    color: var(--city-primary);
+    border-color: var(--city-primary);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--city-primary);
+    border-color: var(--city-primary);
+}
+
+
+/* ==========================================================================
+   CARDS (generic)
+   Used everywhere | Borderless with subtle shadow
+   ========================================================================== */
+
+.card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+
+/* ==========================================================================
+   TABLES
+   Used in: Votes, Agenda Search, Council Member vote history
+   ========================================================================== */
+
+.table th {
+    font-weight: 600;
+    color: #495057;
+    border-top: none;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(31, 78, 121, 0.05);
+}
+
+/* Sortable column headers (Agenda Search) */
+.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.sortable:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+
+.sort-icon {
+    opacity: 0.3;
+    margin-left: 5px;
+}
+
+.sortable.active .sort-icon {
+    opacity: 1;
+}
+
+
+/* ==========================================================================
+   LIST GROUPS
+   Used in: Meetings list, Meeting detail agenda items
+   ========================================================================== */
+
+.list-group-item-action:hover {
+    background-color: #f8f9fa;
+}
+
+
+/* ==========================================================================
+   PROGRESS BARS
+   Used in: Council cards (voting pattern), Vote detail (tally bar)
+   Height: 10px (council cards), 30px (vote detail)
+   ========================================================================== */
+
+.progress {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+
+/* ==========================================================================
+   BADGES
+   Types: outcome (PASS/FAIL), vote choice (AYE/NAY), status (Current/Former)
+   ========================================================================== */
+
+.badge {
+    font-weight: 500;
+}
+
+
+/* ==========================================================================
+   FILTER SECTION
+   Used in: Council Member, Agenda Search
+   ========================================================================== */
+
+.filter-row {
+    background-color: #f8f9fa;
+}
+
+
+/* ==========================================================================
+   PAGINATION
+   Used in: Votes, Agenda Search, Meetings, Council Member
+   ========================================================================== */
+
+.page-link {
+    color: var(--city-primary);
+}
+
+.page-item.active .page-link {
+    background-color: var(--city-primary);
+    border-color: var(--city-primary);
+}
+
+
+/* ==========================================================================
+   BREADCRUMB
+   Used in: Council Member, Meeting Detail, Vote Detail
+   ========================================================================== */
+
+.breadcrumb-item a {
+    color: var(--city-primary);
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    color: var(--city-primary-dark);
+    text-decoration: underline;
+}
+
+
+/* ==========================================================================
+   FOOTER
+   Height: ~80px | Full-width | Dark background with accent border
+   ========================================================================== */
+
+footer {
+    border-top: 3px solid var(--city-accent);
+}
+
+
+/* ==========================================================================
+   LOADING STATES
+   ========================================================================== */
+
+.spinner-border {
+    color: var(--city-primary) !important;
+}
+
+
+/* ==========================================================================
+   ACCESSIBILITY
+   ========================================================================== */
+
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--city-primary);
+    color: white;
+    padding: 8px 16px;
+    z-index: 9999;
+    transition: top 0.3s;
+}
+
+.skip-link:focus {
+    top: 0;
+    color: var(--city-accent);
+    outline: 2px solid var(--city-accent);
+    outline-offset: 2px;
+}
+
+a:focus,
+button:focus,
+input:focus,
+select:focus,
+.btn:focus,
+.form-control:focus,
+.form-select:focus {
+    outline: 2px solid var(--city-primary);
+    outline-offset: 2px;
+}
+
+.btn:focus {
+    box-shadow: 0 0 0 0.25rem rgba(31, 78, 121, 0.25);
+}
+
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .stat-card .stat-value {
+        font-size: 1.75rem;
+    }
+
+    .hero-section h1 {
+        font-size: 1.75rem;
+    }
+
+    .council-avatar {
+        width: 50px;
+        height: 50px;
+    }
+}
+
+/* High contrast */
+@media (prefers-contrast: high) {
+    .badge { border: 1px solid currentColor; }
+    .card { border: 2px solid #000; }
+    .progress-bar { border: 1px solid #000; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .council-card, .stat-card, .skip-link { transition: none; }
+    .council-card:hover, .stat-card:hover { transform: none; }
+}
+
+/* Print */
+@media print {
+    .navbar, footer, .btn, .skip-link { display: none !important; }
+    .card { box-shadow: none; border: 1px solid #dee2e6; }
+}

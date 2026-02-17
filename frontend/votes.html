@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Page title and meta description: replace Dallas with the deployed city name -->
+    <title>Votes - CityVotes Dallas</title>
+    <meta name="description" content="Search and browse Dallas City Council voting records.">
+
+    <!-- Open Graph / Facebook: social sharing metadata for the votes page -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Votes - CityVotes Dallas">
+    <meta property="og:description" content="Search and browse Dallas City Council voting records.">
+    <meta property="og:site_name" content="CityVotes">
+
+    <!-- Twitter Card: Twitter-specific sharing metadata -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Votes - CityVotes Dallas">
+    <meta name="twitter:description" content="Search and browse Dallas City Council voting records.">
+
+    <!-- Bootstrap CSS: provides responsive grid, utility classes, and component styles -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <!-- Font Awesome: icon library used for UI icons (search, vote, calendar, etc.) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" crossorigin="anonymous">
+    <!--
+        Custom Theme CSS: city-specific colors and overrides.
+        Each city deployment provides its own css/theme.css defining:
+        - bg-city-primary: primary background color (navbar, buttons)
+        - text-city-primary: primary text color for headings and links
+        - text-city-accent: accent text color for highlights and badges
+    -->
+    <link href="css/theme.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Skip Navigation: accessibility link allowing keyboard users to jump past the navbar -->
+    <a href="#main-content" class="visually-hidden-focusable skip-link">Skip to main content</a>
+
+    <!--
+        Navigation Bar
+        - Uses Bootstrap's navbar-expand-lg for responsive collapsing on smaller screens.
+        - bg-city-primary: primary brand color defined in css/theme.css.
+        - Contains 5 nav links: Home, Council, Meetings, Votes (active), Search.
+        - Right side shows a Help button and the city name indicator with text-city-accent.
+    -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-city-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-vote-yea me-2"></i>CityVotes
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="council.html">
+                            <i class="fas fa-users me-1"></i>Council
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="meetings.html">
+                            <i class="fas fa-calendar me-1"></i>Meetings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <!-- "active" class marks this as the current page -->
+                        <a class="nav-link active" href="votes.html">
+                            <i class="fas fa-check-square me-1"></i>Votes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="agenda-search.html">
+                            <i class="fas fa-search me-1"></i>Search
+                        </a>
+                    </li>
+                </ul>
+                <a href="about.html" class="btn btn-outline-light btn-sm me-3">
+                    <i class="fas fa-question-circle me-1"></i>Help
+                </a>
+                <!--
+                    City name indicator: displays the deployed city name in the navbar.
+                    Uses text-city-accent for the accent color defined in theme.css.
+                -->
+                <span class="navbar-text text-city-accent">
+                    <i class="fas fa-map-marker-alt me-1"></i>Dallas
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <!--
+        Page Header
+        - Light background (bg-light) with vertical padding (py-4).
+        - Contains the page title and a subtitle describing the page purpose.
+        - Dallas placeholder appears in the subtitle text.
+    -->
+    <header class="bg-light py-4">
+        <div class="container">
+            <h1><i class="fas fa-check-square me-2"></i>Vote Search</h1>
+            <p class="text-muted mb-0">Search and filter Dallas City Council voting records</p>
+        </div>
+    </header>
+
+    <!--
+        Main Content Area
+        - id="main-content" is the target of the skip navigation link.
+        - Bootstrap container with vertical margin (my-4).
+        - Contains: search/filters card, results count, votes table, and pagination.
+    -->
+    <main id="main-content" class="container my-4">
+
+        <!--
+            Search and Filters Card
+            - Wrapped in a Bootstrap card for visual grouping.
+            - Uses a 5-column responsive grid (row g-3) to lay out controls:
+              col-md-4: search input with icon prefix and Search button
+              col-md-2: topic filter dropdown (populated from AVAILABLE_TOPICS constant)
+              col-md-2: year filter dropdown (populated dynamically from votes index API)
+              col-md-2: outcome filter dropdown (static options: Passed, Failed, Special)
+              col-md-2: Clear button to reset all filters
+            - All filter changes trigger searchVotes() or handleYearChange() to re-render.
+        -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <!--
+                        Search Input (col-md-4)
+                        - Input group with a Font Awesome search icon prefix.
+                        - Text input searches against vote titles and descriptions.
+                        - The Search button calls searchVotes() which re-renders with offset 0.
+                        - Enter key press also triggers search (bound in DOMContentLoaded).
+                    -->
+                    <div class="col-md-4">
+                        <label for="searchInput" class="visually-hidden">Search votes</label>
+                        <div class="input-group">
+                            <span class="input-group-text" aria-hidden="true"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="searchInput" placeholder="Search titles..." aria-label="Search titles and descriptions">
+                            <button class="btn btn-primary" onclick="searchVotes()" type="button">Search</button>
+                        </div>
+                    </div>
+
+                    <!--
+                        Topic Filter Dropdown (col-md-2)
+                        - Populated dynamically from the AVAILABLE_TOPICS constant via populateTopicDropdown().
+                        - AVAILABLE_TOPICS contains categories like 'Budget & Finance', 'Public Safety', etc.
+                        - Filters votes by checking if the vote's topics array includes the selected topic.
+                        - onchange triggers searchVotes() to re-render the table.
+                    -->
+                    <div class="col-md-2">
+                        <label for="topicFilter" class="visually-hidden">Filter by topic</label>
+                        <select class="form-select" id="topicFilter" onchange="searchVotes()" aria-label="Filter by topic">
+                            <option value="">All Topics</option>
+                        </select>
+                    </div>
+
+                    <!--
+                        Year Filter Dropdown (col-md-2)
+                        - Populated dynamically from the votes index API (availableYears array).
+                        - Data source: CityVotesAPI.getVotesIndex() returns available_years.
+                        - onchange triggers handleYearChange() which loads the specific year's data
+                          from the cache or API, then re-renders. Selecting "All Years" loads all years.
+                        - Supports URL parameter ?year=XXXX for deep linking.
+                    -->
+                    <div class="col-md-2">
+                        <label for="yearFilter" class="visually-hidden">Filter by year</label>
+                        <select class="form-select" id="yearFilter" onchange="handleYearChange()" aria-label="Filter by year">
+                            <option value="">All Years</option>
+                        </select>
+                    </div>
+
+                    <!--
+                        Outcome Filter Dropdown (col-md-2)
+                        - Static options: All Outcomes, Passed (PASS), Failed (FAIL), Special.
+                        - "Special" matches any outcome in the SPECIAL_OUTCOMES constant
+                          (CONTINUED, REMOVED, FLAG, TABLED, WITHDRAWN).
+                        - onchange triggers searchVotes() to re-render the table.
+                    -->
+                    <div class="col-md-2">
+                        <label for="outcomeFilter" class="visually-hidden">Filter by outcome</label>
+                        <select class="form-select" id="outcomeFilter" onchange="searchVotes()" aria-label="Filter by outcome">
+                            <option value="">All Outcomes</option>
+                            <option value="PASS">Passed</option>
+                            <option value="FAIL">Failed</option>
+                            <option value="SPECIAL">Special</option>
+                        </select>
+                    </div>
+
+                    <!--
+                        Clear Filters Button (col-md-2)
+                        - Resets all filter inputs, clears the URL year parameter,
+                          loads all years of vote data, and re-renders from offset 0.
+                    -->
+                    <div class="col-md-2">
+                        <button class="btn btn-outline-secondary w-100" onclick="clearFilters()" type="button">
+                            <i class="fas fa-times me-1" aria-hidden="true"></i>Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--
+            Results Count
+            - Live region (aria-live="polite") announces count changes to screen readers.
+            - Updated by renderVotes() to show "Showing X of Y votes".
+            - Initially displays "Loading..." until data is fetched.
+        -->
+        <div class="d-flex justify-content-between align-items-center mb-3" aria-live="polite" aria-atomic="true">
+            <h5 class="mb-0" id="resultsCount">Loading...</h5>
+        </div>
+
+        <!--
+            Votes Table
+            - Wrapped in a card with table-responsive for horizontal scrolling on small screens.
+            - Uses Bootstrap's table-hover for interactive row highlighting.
+            - 7 columns:
+              1. Date       - Meeting date formatted as "Mon DD, YYYY" with meeting type subtitle
+              2. Item       - Agenda item number displayed as a light badge
+              3. Title      - Truncated vote title linking to vote-detail.html?id=XXX
+              4. Outcome    - Color-coded badge: green (PASS), red (FAIL), yellow (special)
+              5. Tally      - Vote counts as "ayes-noes-abstain" in green-red-gray;
+                              special outcomes show a flag badge instead of counts
+              6. Documents  - Three icon badges for Agenda, Minutes, and Video:
+                              * When URL is available: clickable btn-outline button linking to document
+                              * When URL is unavailable: muted badge icon with "not available" tooltip
+                              This available/unavailable state comes from the meetingsData map,
+                              which is keyed by meeting_date and loaded from CityVotesAPI.getMeetings().
+              7. Actions    - "View details" eye icon button linking to vote-detail.html
+            - Initially shows a Bootstrap spinner while data loads.
+        -->
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Date</th>
+                            <th scope="col">Item</th>
+                            <th scope="col">Title</th>
+                            <th scope="col">Outcome</th>
+                            <th scope="col">Tally</th>
+                            <th scope="col">Documents</th>
+                            <th scope="col"><span class="visually-hidden">Actions</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="votesTable">
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!--
+            Pagination
+            - Hidden by default (style="display: none;"), shown only when totalPages > 1.
+            - Uses Bootstrap pagination component with centered alignment.
+            - Previous/Next buttons plus page number links with ellipsis for large page counts.
+            - Page numbers show: first page, last page, and up to 2 pages on either side of current.
+            - Click events are handled via event delegation on the #pagination element (XSS-safe).
+            - Each page link stores its data-offset attribute; clicking calls renderVotes(offset).
+        -->
+        <nav class="mt-4" id="paginationNav" style="display: none;">
+            <ul class="pagination justify-content-center" id="pagination">
+            </ul>
+        </nav>
+    </main>
+
+    <!--
+        Footer
+        - Dark background with light text, 3-column responsive grid:
+          col-md-6: site branding with Dallas and data source attribution
+          col-md-4: call-to-action link for other cities, uses text-city-accent
+          col-md-2: data year label
+    -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>CityVotes - Dallas Voting Transparency</h6>
+                    <p class="text-muted mb-0">Data sourced from official Dallas city council meeting records.</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <p class="mb-0">Want a different city? <a href="contact.html" class="text-city-accent">Contact us</a></p>
+                </div>
+                <div class="col-md-2 text-end">
+                    <span class="text-muted">-- Data</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS: required for navbar collapse toggle and other Bootstrap interactive components -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <!--
+        Static Data API (js/api.js)
+        - Provides CityVotesAPI object with methods:
+          - getMeetings(): fetches meetings list with agenda_url, minutes_url, video_url
+          - getVotesIndex(): fetches vote index including available_years array
+          - getVotesByYear(year): fetches votes for a specific year (used for lazy loading)
+          - getVotes(): fetches all votes (fallback when year-based loading fails)
+        - Data files are city-specific JSON in the data/ directory.
+    -->
+    <script src="js/api.js"></script>
+
+    <script>
+    /*
+     * Votes Page JavaScript
+     *
+     * State variables:
+     * - allVotes: array of vote objects currently loaded (for the active year or all years)
+     * - votesCache: object keyed by year number, caching loaded vote arrays for performance
+     *               so switching between years does not re-fetch data
+     * - availableYears: array of year numbers from the votes index (e.g., [2024, 2023, 2022])
+     * - meetingsData: map of meeting_date string -> { agenda_url, minutes_url, video_url }
+     *                 Used to look up document links for each vote row's Documents column.
+     *                 Populated once at initialization from CityVotesAPI.getMeetings().
+     *                 When a URL is present, the document icon renders as a clickable button;
+     *                 when null/undefined, it renders as a muted badge indicating unavailability.
+     * - pageSize: number of votes per page (20)
+     * - currentOffset: current pagination offset into filtered results
+     * - currentYear: currently selected year filter (null = all years)
+     * - isLoadingAll: guard flag to prevent concurrent loadAllVotes() calls
+     */
+    let allVotes = [];
+    let votesCache = {}; // Cache votes by year for performance
+    let availableYears = [];
+    let meetingsData = {}; // Map of meeting_date -> meeting info (agenda, minutes, video URLs)
+    const pageSize = 20;
+    let currentOffset = 0;
+    let currentYear = null;
+    let isLoadingAll = false;
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        // Check URL params for year filter (supports deep linking like ?year=2024)
+        const urlParams = new URLSearchParams(window.location.search);
+        const yearParam = urlParams.get('year');
+        if (yearParam) {
+            currentYear = parseInt(yearParam);
+        }
+
+        await initializeVotes();
+
+        // Enter key to search
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchVotes();
+            }
+        });
+    });
+
+    /*
+     * initializeVotes()
+     * 1. Loads meetings data to populate the meetingsData map (for document icon badges).
+     * 2. Loads the votes index to get availableYears.
+     * 3. Populates the year and topic filter dropdowns.
+     * 4. Loads votes for the selected year (or most recent year if none specified).
+     * 5. Renders the initial table view.
+     * Falls back to loadAllVotes() if the index-based approach fails.
+     */
+    async function initializeVotes() {
+        try {
+            // Load meetings data for agenda/minutes/video links
+            const meetings = await CityVotesAPI.getMeetings();
+            if (meetings.success) {
+                meetings.meetings.forEach(m => {
+                    meetingsData[m.meeting_date] = {
+                        agenda_url: m.agenda_url,
+                        minutes_url: m.minutes_url,
+                        video_url: m.video_url
+                    };
+                });
+            }
+
+            // First load the index to get available years
+            const indexData = await CityVotesAPI.getVotesIndex();
+            availableYears = indexData.available_years;
+
+            // Populate year dropdown
+            const yearSelect = document.getElementById('yearFilter');
+            availableYears.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                if (year === currentYear) option.selected = true;
+                yearSelect.appendChild(option);
+            });
+
+            // Load only the selected year (or most recent if none selected)
+            const yearToLoad = currentYear || availableYears[0];
+            await loadVotesForYear(yearToLoad);
+
+            // Set year filter if we auto-selected
+            if (!currentYear) {
+                yearSelect.value = yearToLoad;
+            }
+
+            // Populate topic dropdown from loaded vote data
+            populateTopicDropdown();
+
+            renderVotes(0);
+        } catch (error) {
+            console.error('Error initializing votes:', error);
+            // Fallback to loading all votes
+            await loadAllVotes();
+        }
+    }
+
+    /*
+     * loadVotesForYear(year)
+     * Loads votes for a specific year. Uses votesCache to avoid redundant API calls.
+     * Data source: CityVotesAPI.getVotesByYear(year) which fetches data/votes_{year}.json
+     */
+    async function loadVotesForYear(year) {
+        if (votesCache[year]) {
+            allVotes = votesCache[year];
+            return;
+        }
+
+        try {
+            const data = await CityVotesAPI.getVotesByYear(year);
+            if (data.success) {
+                votesCache[year] = data.votes;
+                allVotes = data.votes;
+            }
+        } catch (error) {
+            console.error(`Error loading votes for ${year}:`, error);
+            throw error;
+        }
+    }
+
+    /*
+     * loadAllVotes()
+     * Loads votes from all available years and combines them into allVotes.
+     * Used when "All Years" is selected or as a fallback.
+     * Uses isLoadingAll guard to prevent concurrent calls.
+     */
+    async function loadAllVotes() {
+        if (isLoadingAll) return;
+        isLoadingAll = true;
+
+        try {
+            // Load all years and combine
+            const allYearVotes = [];
+            for (const year of availableYears) {
+                if (!votesCache[year]) {
+                    const data = await CityVotesAPI.getVotesByYear(year);
+                    if (data.success) {
+                        votesCache[year] = data.votes;
+                    }
+                }
+                allYearVotes.push(...(votesCache[year] || []));
+            }
+            allVotes = allYearVotes;
+        } catch (error) {
+            console.error('Error loading all votes:', error);
+            // Ultimate fallback - load from full votes.json
+            const data = await CityVotesAPI.getVotes();
+            if (data.success) {
+                allVotes = data.votes;
+            }
+        }
+    }
+
+    /*
+     * handleYearChange()
+     * Called when the year filter dropdown changes.
+     * Loads data for the selected year (or all years if blank), then re-renders.
+     */
+    async function handleYearChange() {
+        const year = document.getElementById('yearFilter').value;
+
+        if (!year) {
+            // Load all years
+            document.getElementById('resultsCount').textContent = 'Loading all years...';
+            await loadAllVotes();
+        } else {
+            // Load specific year
+            document.getElementById('resultsCount').textContent = `Loading ${year}...`;
+            await loadVotesForYear(parseInt(year));
+        }
+
+        renderVotes(0);
+    }
+
+    async function loadVotes() {
+        // Deprecated - kept for backwards compatibility
+        await initializeVotes();
+    }
+
+    function searchVotes() {
+        renderVotes(0);
+    }
+
+    /*
+     * clearFilters()
+     * Resets all filter inputs to their default empty state, clears the URL year parameter,
+     * loads all years of data, and re-renders the table from offset 0.
+     */
+    async function clearFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('topicFilter').value = '';
+        document.getElementById('outcomeFilter').value = '';
+        document.getElementById('yearFilter').value = '';
+        currentYear = null;
+        // Update URL
+        window.history.pushState({}, '', window.location.pathname);
+        // Load all years when filters cleared
+        await loadAllVotes();
+        renderVotes(0);
+    }
+
+    /*
+     * AVAILABLE_TOPICS constant
+     * A curated list of topic categories used to classify agenda items.
+     * These are displayed in the topic filter dropdown and matched against
+     * the "topics" array field on each vote object.
+     * Sorted alphabetically with "General" placed last as a catch-all category.
+     * Each city deployment can customize this list to match its own topic taxonomy.
+     */
+    let AVAILABLE_TOPICS = [];
+
+    /*
+     * populateTopicDropdown()
+     * Iterates over AVAILABLE_TOPICS and appends <option> elements to the #topicFilter select.
+     * Called once during initializeVotes().
+     */
+    function populateTopicDropdown() {
+        const topicSelect = document.getElementById('topicFilter');
+        // Extract topics dynamically from loaded votes
+        if (AVAILABLE_TOPICS.length === 0) {
+            const topicSet = new Set();
+            allVotes.forEach(v => (v.topics || []).forEach(t => topicSet.add(t)));
+            AVAILABLE_TOPICS = Array.from(topicSet).sort();
+        }
+        // Clear existing options (keep first "All Topics")
+        while (topicSelect.options.length > 1) topicSelect.remove(1);
+        AVAILABLE_TOPICS.forEach(topic => {
+            const option = document.createElement('option');
+            option.value = topic;
+            option.textContent = topic;
+            topicSelect.appendChild(option);
+        });
+    }
+
+    /*
+     * SPECIAL_OUTCOMES constant
+     * Procedural vote outcomes that are neither a simple PASS nor FAIL.
+     * These receive a yellow warning badge in the Outcome column and display
+     * a flag icon in the Tally column instead of ayes-noes-abstain counts,
+     * since these procedural actions typically do not have a traditional roll-call vote.
+     * The "Special" option in the outcome filter dropdown matches any of these values.
+     */
+    const SPECIAL_OUTCOMES = ['CONTINUED', 'REMOVED', 'FLAG', 'TABLED', 'WITHDRAWN'];
+
+    /*
+     * renderVotes(offset)
+     * Main rendering function that:
+     * 1. Reads current filter values (search text, topic, outcome, year).
+     * 2. Filters allVotes based on those criteria.
+     * 3. Paginates the filtered results using pageSize and the given offset.
+     * 4. Generates table row HTML for each vote, including:
+     *    - Date and meeting type
+     *    - Item number badge
+     *    - Truncated title linking to detail page
+     *    - Outcome badge (color-coded)
+     *    - Tally (ayes-noes-abstain or flag for special outcomes)
+     *    - Document icon badges (available vs unavailable state from meetingsData map)
+     *    - View detail action button
+     * 5. Updates the results count text.
+     * 6. Updates pagination controls.
+     */
+    function renderVotes(offset = 0) {
+        currentOffset = offset;
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const topic = document.getElementById('topicFilter').value;
+        const outcome = document.getElementById('outcomeFilter').value;
+        const year = document.getElementById('yearFilter').value;
+
+        // Filter votes based on all active filter criteria
+        let filteredVotes = allVotes.filter(vote => {
+            let matches = true;
+
+            // Search filter: matches against title and description fields
+            if (search) {
+                const titleMatch = vote.title && vote.title.toLowerCase().includes(search);
+                const descMatch = vote.description && vote.description.toLowerCase().includes(search);
+                matches = matches && (titleMatch || descMatch);
+            }
+
+            // Topic filter: checks if vote's topics array includes the selected topic
+            if (topic) {
+                const voteTopics = vote.topics || [];
+                matches = matches && voteTopics.includes(topic);
+            }
+
+            // Outcome filter: PASS/FAIL match directly; SPECIAL matches any SPECIAL_OUTCOMES value
+            if (outcome) {
+                if (outcome === 'SPECIAL') {
+                    // Match any special procedural outcome
+                    matches = matches && SPECIAL_OUTCOMES.includes(vote.outcome);
+                } else {
+                    matches = matches && vote.outcome === outcome;
+                }
+            }
+
+            // Year filter: extracts year from meeting_date and compares
+            if (year) {
+                const voteYear = new Date(vote.meeting_date).getFullYear();
+                matches = matches && voteYear === parseInt(year);
+            }
+
+            return matches;
+        });
+
+        // Paginate: slice the filtered results to the current page window
+        const paginatedVotes = filteredVotes.slice(offset, offset + pageSize);
+
+        const table = document.getElementById('votesTable');
+        if (paginatedVotes.length === 0) {
+            table.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">
+                        <i class="fas fa-search fa-2x mb-2"></i>
+                        <p class="mb-0">No votes found matching your criteria</p>
+                    </td>
+                </tr>
+            `;
+        } else {
+            table.innerHTML = paginatedVotes.map(vote => {
+                /*
+                 * Look up meeting document URLs from the meetingsData map.
+                 * meetingsData is keyed by meeting_date (e.g., "2024-03-05").
+                 * Each entry has: { agenda_url, minutes_url, video_url }
+                 * If a URL is truthy, render a clickable outline button linking to the document.
+                 * If a URL is falsy (null/undefined/""), render a muted badge icon indicating
+                 * the document is not available, with an appropriate tooltip.
+                 */
+                const meeting = meetingsData[vote.meeting_date] || {};
+                return `
+                <tr>
+                    <td>
+                        <small>${formatDate(vote.meeting_date)}</small>
+                        <div class="text-muted" style="font-size: 0.75rem;">${vote.meeting_type}</div>
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark">${vote.item_number}</span>
+                    </td>
+                    <td>
+                        <a href="vote-detail.html?id=${vote.id}" class="text-decoration-none">
+                            ${truncate(vote.title, 60)}
+                        </a>
+                    </td>
+                    <td>
+                        <span class="badge ${getOutcomeBadgeClass(vote.outcome)}" role="status">${getOutcomeLabel(vote.outcome)}</span>
+                    </td>
+                    <td>
+                        ${SPECIAL_OUTCOMES.includes(vote.outcome)
+                            ? '<span class="badge bg-warning text-dark" title="Check original documents or video"><i class="fas fa-flag me-1"></i>Flag</span>'
+                            : `<span class="text-success">${vote.ayes}</span>-<span class="text-danger">${vote.noes}</span>-<span class="text-warning">${vote.abstain}</span>-<span class="text-secondary">${vote.absent}</span>`}
+                    </td>
+                    <td>
+                        ${meeting.agenda_url ? `<a href="${meeting.agenda_url}" target="_blank" class="btn btn-sm btn-outline-secondary me-1" title="View Agenda"><i class="fas fa-file-alt"></i></a>` : '<span class="badge bg-light text-muted me-1" title="Agenda not available"><i class="fas fa-file-alt"></i></span>'}
+                        ${meeting.minutes_url ? `<a href="${meeting.minutes_url}" target="_blank" class="btn btn-sm btn-outline-secondary me-1" title="View Minutes"><i class="fas fa-clipboard-list"></i></a>` : '<span class="badge bg-light text-muted me-1" title="Minutes not available"><i class="fas fa-clipboard-list"></i></span>'}
+                        ${meeting.video_url ? `<a href="${meeting.video_url}" target="_blank" class="btn btn-sm btn-outline-danger" title="Watch Video"><i class="fas fa-video"></i></a>` : '<span class="badge bg-light text-muted" title="Video not available"><i class="fas fa-video"></i></span>'}
+                    </td>
+                    <td>
+                        <a href="vote-detail.html?id=${vote.id}" class="btn btn-sm btn-outline-primary" aria-label="View details for vote ${vote.item_number}" title="View details">
+                            <i class="fas fa-eye" aria-hidden="true"></i>
+                            <span class="visually-hidden">View vote details</span>
+                        </a>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        document.getElementById('resultsCount').textContent =
+            `Showing ${paginatedVotes.length} of ${filteredVotes.length.toLocaleString()} votes`;
+
+        updatePagination(filteredVotes.length, offset);
+    }
+
+    /*
+     * updatePagination(total, currentOffset)
+     * Builds Bootstrap pagination controls based on the total number of filtered results.
+     * - Hides pagination if only 1 page.
+     * - Shows Previous/Next buttons (disabled at boundaries).
+     * - Shows page numbers with ellipsis: always shows first and last page,
+     *   plus up to 2 pages on either side of the current page.
+     * - Each page link stores a data-offset attribute for the click handler.
+     */
+    function updatePagination(total, currentOffset) {
+        const totalPages = Math.ceil(total / pageSize);
+        const currentPage = Math.floor(currentOffset / pageSize);
+
+        if (totalPages <= 1) {
+            document.getElementById('paginationNav').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('paginationNav').style.display = 'block';
+        const pagination = document.getElementById('pagination');
+        pagination.innerHTML = '';
+
+        // Previous button
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${currentPage === 0 ? 'disabled' : ''}`;
+        const prevLink = document.createElement('a');
+        prevLink.className = 'page-link';
+        prevLink.href = '#';
+        prevLink.textContent = 'Previous';
+        prevLink.setAttribute('data-offset', (currentPage - 1) * pageSize);
+        prevLi.appendChild(prevLink);
+        pagination.appendChild(prevLi);
+
+        // Page numbers with ellipsis for large page counts
+        for (let i = 0; i < totalPages; i++) {
+            if (i === 0 || i === totalPages - 1 || Math.abs(i - currentPage) <= 2) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                const link = document.createElement('a');
+                link.className = 'page-link';
+                link.href = '#';
+                link.textContent = i + 1;
+                link.setAttribute('data-offset', i * pageSize);
+                li.appendChild(link);
+                pagination.appendChild(li);
+            } else if (Math.abs(i - currentPage) === 3) {
+                const li = document.createElement('li');
+                li.className = 'page-item disabled';
+                const span = document.createElement('span');
+                span.className = 'page-link';
+                span.textContent = '...';
+                li.appendChild(span);
+                pagination.appendChild(li);
+            }
+        }
+
+        // Next button
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${currentPage === totalPages - 1 ? 'disabled' : ''}`;
+        const nextLink = document.createElement('a');
+        nextLink.className = 'page-link';
+        nextLink.href = '#';
+        nextLink.textContent = 'Next';
+        nextLink.setAttribute('data-offset', (currentPage + 1) * pageSize);
+        nextLi.appendChild(nextLink);
+        pagination.appendChild(nextLi);
+    }
+
+    /*
+     * Pagination click handler (event delegation)
+     * Listens on the #pagination container for clicks on any a.page-link element.
+     * Reads the data-offset attribute and calls renderVotes() with that offset.
+     * Uses event delegation instead of inline onclick for XSS safety.
+     */
+    document.getElementById('pagination').addEventListener('click', function(e) {
+        e.preventDefault();
+        const link = e.target.closest('a.page-link');
+        if (link && !link.closest('.disabled')) {
+            const offset = parseInt(link.getAttribute('data-offset'), 10);
+            if (!isNaN(offset) && offset >= 0) {
+                renderVotes(offset);
+            }
+        }
+    });
+
+    /* formatDate(dateStr) - Formats an ISO date string to "Mon DD, YYYY" display format */
+    function formatDate(dateStr) {
+        const date = new Date(dateStr + 'T00:00:00');
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    /* escapeHtml(str) - XSS prevention: escapes HTML entities in user-facing strings */
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    /* truncate(str, len) - Truncates and HTML-escapes a string, appending "..." if over limit */
+    function truncate(str, len) {
+        if (!str) return '';
+        const escaped = escapeHtml(str);
+        return escaped.length > len ? escaped.substring(0, len) + '...' : escaped;
+    }
+
+    /*
+     * getOutcomeBadgeClass(outcome) - Returns Bootstrap badge CSS class based on vote outcome:
+     *   PASS -> bg-success (green)
+     *   FAIL -> bg-danger (red)
+     *   SPECIAL_OUTCOMES -> bg-warning text-dark (yellow)
+     *   Other -> bg-secondary (gray)
+     */
+    function getOutcomeBadgeClass(outcome) {
+        if (outcome === 'PASS') return 'bg-success';
+        if (outcome === 'FAIL') return 'bg-danger';
+        if (SPECIAL_OUTCOMES.includes(outcome)) return 'bg-warning text-dark';
+        return 'bg-secondary';
+    }
+
+    /*
+     * getOutcomeLabel(outcome) - Returns human-readable label for the vote outcome:
+     *   PASS -> "Passed"
+     *   FAIL -> "Failed"
+     *   SPECIAL_OUTCOMES -> Title case (e.g., "Continued", "Tabled")
+     *   Other -> raw value or "Unknown"
+     */
+    function getOutcomeLabel(outcome) {
+        if (outcome === 'PASS') return 'Passed';
+        if (outcome === 'FAIL') return 'Failed';
+        // For special outcomes, capitalize first letter, rest lowercase
+        if (SPECIAL_OUTCOMES.includes(outcome)) {
+            return outcome.charAt(0) + outcome.slice(1).toLowerCase();
+        }
+        return outcome || 'Unknown';
+    }
+    </script>
+</body>
+</html>

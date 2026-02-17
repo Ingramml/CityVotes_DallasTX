@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- REPLACE: {CityName} -->
+    <title>City Council - CityVotes {CityName}</title>
+    <meta name="description" content="{CityName} City Council members and their voting records.">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="css/theme.css" rel="stylesheet">
+</head>
+<body>
+    <a href="#main-content" class="visually-hidden-focusable skip-link">Skip to main content</a>
+
+    <!-- NAVIGATION BAR (same as index.html, set Council as active) -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-city-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html"><i class="fas fa-vote-yea me-2"></i>CityVotes</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html"><i class="fas fa-home me-1"></i>Home</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="council.html"><i class="fas fa-users me-1"></i>Council</a></li>
+                    <li class="nav-item"><a class="nav-link" href="meetings.html"><i class="fas fa-calendar me-1"></i>Meetings</a></li>
+                    <li class="nav-item"><a class="nav-link" href="votes.html"><i class="fas fa-check-square me-1"></i>Votes</a></li>
+                    <li class="nav-item"><a class="nav-link" href="agenda-search.html"><i class="fas fa-search me-1"></i>Search</a></li>
+                </ul>
+                <a href="about.html" class="btn btn-outline-light btn-sm me-3"><i class="fas fa-question-circle me-1"></i>Help</a>
+                <span class="navbar-text text-city-accent"><i class="fas fa-map-marker-alt me-1"></i>{CityName}</span>
+            </div>
+        </div>
+    </nav>
+
+    <!--
+    ================================================================
+    PAGE HEADER
+    Simple header with icon, title, and subtitle
+    ================================================================
+    -->
+    <header class="bg-light py-4">
+        <div class="container">
+            <!-- REPLACE: {CityName} -->
+            <h1><i class="fas fa-users me-2"></i>City Council Members</h1>
+            <p class="text-muted mb-0">Voting records and statistics for {CityName} City Council</p>
+        </div>
+    </header>
+
+    <main id="main-content" class="container my-4">
+        <!--
+        ================================================================
+        COUNCIL MEMBER CARDS GRID
+        Layout: 3 columns desktop (col-lg-4), 2 tablet (col-md-6), 1 mobile
+        Data: council.json -> members[]
+
+        Each card contains:
+        - Avatar + Name + Position + Current/Former badge
+        - 3 mini stats (Aye count, Nay count, Abstain count)
+        - Progress bar (green=aye, red=nay, gray=absent)
+        - Summary line (Aye Rate, Dissent Rate, Participation)
+        - "View Profile" button -> council-member.html?id={id}
+        - Footer: total votes count
+        ================================================================
+        -->
+        <div class="row" id="councilGrid">
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>CityVotes - {CityName} Voting Transparency</h6>
+                    <p class="text-muted mb-0">Data sourced from official {CityName} city council meeting records.</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <p class="mb-0">Want a different city? <a href="contact.html" class="text-city-accent">Contact us</a></p>
+                </div>
+                <div class="col-md-2 text-end"><span class="text-muted">-- Data</span></div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/api.js"></script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', async function() {
+        await loadCouncil();
+    });
+
+    async function loadCouncil() {
+        try {
+            const data = await CityVotesAPI.getCouncil();
+            if (data.success) {
+                const grid = document.getElementById('councilGrid');
+                grid.innerHTML = data.members.map(member => `
+                    <!--
+                    COUNCIL CARD LAYOUT
+                    col-lg-4 = 3 cards per row on desktop
+                    col-md-6 = 2 cards per row on tablet
+                    full width on mobile
+                    -->
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="card council-card h-100">
+                            <div class="card-body">
+                                <!-- ROW 1: Avatar + Name + Badge -->
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="council-avatar me-3">
+                                        <i class="fas fa-user-circle fa-3x text-city-primary"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center">
+                                            <h5 class="card-title mb-0 me-2">${member.full_name}</h5>
+                                            ${member.is_current
+                                                ? '<span class="badge bg-success">Current</span>'
+                                                : '<span class="badge bg-secondary">Former</span>'}
+                                        </div>
+                                        <small class="text-muted">${member.position || 'Council Member'}</small>
+                                    </div>
+                                </div>
+
+                                <!-- ROW 2: Mini stats (3 columns) -->
+                                <div class="row text-center mb-3">
+                                    <div class="col-4">
+                                        <div class="stat-mini">
+                                            <div class="value text-success">${member.stats.aye_count}</div>
+                                            <div class="label">Aye</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="stat-mini">
+                                            <div class="value text-danger">${member.stats.nay_count}</div>
+                                            <div class="label">Nay</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="stat-mini">
+                                            <div class="value text-warning">${member.stats.abstain_count}</div>
+                                            <div class="label">Abstain</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ROW 3: Voting pattern progress bar -->
+                                <div class="progress mb-2" style="height: 10px;">
+                                    <div class="progress-bar bg-success" style="width: ${member.stats.aye_percentage}%" title="Aye ${member.stats.aye_percentage}%"></div>
+                                    <div class="progress-bar bg-danger" style="width: ${100 - member.stats.aye_percentage - (100 - member.stats.participation_rate)}%" title="Nay"></div>
+                                    <div class="progress-bar bg-secondary" style="width: ${100 - member.stats.participation_rate}%" title="Absent/Abstain"></div>
+                                </div>
+
+                                <!-- ROW 4: Summary stats -->
+                                <div class="d-flex justify-content-between small text-muted mb-3">
+                                    <span>Aye Rate: <strong>${member.stats.aye_percentage}%</strong></span>
+                                    <span>Dissent: <strong>${member.stats.dissent_rate || 0}%</strong></span>
+                                    <span>Participation: <strong>${member.stats.participation_rate}%</strong></span>
+                                </div>
+
+                                <!-- ROW 5: View Profile button -->
+                                <div class="text-center">
+                                    <a href="council-member.html?id=${member.id}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-user me-1"></i>View Profile
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- CARD FOOTER: Total votes -->
+                            <div class="card-footer bg-light">
+                                <small class="text-muted">
+                                    <i class="fas fa-vote-yea me-1"></i>${member.stats.total_votes} total votes
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } catch (error) {
+            console.error('Error loading council:', error);
+            document.getElementById('councilGrid').innerHTML = `
+                <div class="col-12"><div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Failed to load council members.
+                </div></div>`;
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+    </script>
+</body>
+</html>

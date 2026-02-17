@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Item Search - CityVotes {CityName}</title>
+    <meta name="description" content="Search {CityName} City Council agenda items by keyword with advanced filters.">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Agenda Item Search - CityVotes {CityName}">
+    <meta property="og:description" content="Search {CityName} City Council agenda items by keyword with advanced filters.">
+    <meta property="og:site_name" content="CityVotes">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Agenda Item Search - CityVotes {CityName}">
+    <meta name="twitter:description" content="Search {CityName} City Council agenda items by keyword with advanced filters.">
+
+    <!-- Bootstrap CSS (CDN) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <!-- Font Awesome Icons (CDN) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" crossorigin="anonymous">
+    <!-- City-specific theme CSS: defines --city-primary, --city-accent, and related utility classes -->
+    <link href="css/theme.css" rel="stylesheet">
+
+    <!--
+        INLINE STYLES
+        These styles support the sortable column headers and KPI dashboard cards.
+        - .sortable: makes table headers clickable with pointer cursor
+        - .sort-icon: dim sort arrows that become opaque on the active sorted column
+        - .kpi-card: left-border accent cards for the stats dashboard
+        - .filter-row: light background for the filter bar area
+    -->
+    <style>
+        .sortable { cursor: pointer; user-select: none; }
+        .sortable:hover { background-color: rgba(0,0,0,0.05); }
+        .sort-icon { opacity: 0.3; margin-left: 5px; }
+        .sortable.active .sort-icon { opacity: 1; }
+        .kpi-card { border-left: 4px solid; }
+        .kpi-card.meetings { border-left-color: var(--bs-primary); }
+        .kpi-card.votes { border-left-color: var(--bs-success); }
+        .table th { white-space: nowrap; }
+        .filter-row { background-color: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <!-- Skip Navigation: accessibility link for keyboard users to jump past the nav bar -->
+    <a href="#main-content" class="visually-hidden-focusable skip-link">Skip to main content</a>
+
+    <!--
+        NAVIGATION BAR
+        - Uses bg-city-primary for the city-branded background color (defined in theme.css)
+        - Responsive: collapses to hamburger menu on screens < lg breakpoint
+        - Nav items: Home, Council, Meetings, Votes, Search (active on this page)
+        - Right side: Help button + city name badge using text-city-accent color
+        - The city name "{CityName}" appears in the navbar text on the right
+    -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-city-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-vote-yea me-2"></i>CityVotes
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="council.html">
+                            <i class="fas fa-users me-1"></i>Council
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="meetings.html">
+                            <i class="fas fa-calendar me-1"></i>Meetings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="votes.html">
+                            <i class="fas fa-check-square me-1"></i>Votes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="agenda-search.html">
+                            <i class="fas fa-search me-1"></i>Search
+                        </a>
+                    </li>
+                </ul>
+                <a href="about.html" class="btn btn-outline-light btn-sm me-3">
+                    <i class="fas fa-question-circle me-1"></i>Help
+                </a>
+                <!-- City name indicator: uses text-city-accent for the city-branded accent color -->
+                <span class="navbar-text text-city-accent">
+                    <i class="fas fa-map-marker-alt me-1"></i>{CityName}
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <!--
+        PAGE HEADER
+        - Simple light-background header with page title and subtitle
+        - Provides context for what this page does: searching agenda items
+    -->
+    <header class="bg-light py-4">
+        <div class="container">
+            <h1><i class="fas fa-search me-2"></i>Agenda Item Search</h1>
+            <p class="text-muted mb-0">Search and filter agenda items across all meetings</p>
+        </div>
+    </header>
+
+    <!--
+        MAIN CONTENT AREA
+        Contains three major sections:
+        1. KPI Dashboard - summary statistics cards
+        2. Filter Bar - search input + dropdown filters
+        3. Results Table - sortable table with pagination
+
+        All data is loaded from js/api.js via CityVotesAPI.getVotes() and CityVotesAPI.getMeetings().
+    -->
+    <main id="main-content" class="container my-4">
+
+        <!--
+            KPI DASHBOARD
+            A row of 4 summary statistic cards displayed in a responsive grid.
+            Layout: col-md-3 col-6 (4 columns on desktop, 2 per row on mobile)
+
+            Cards (all populated dynamically by updateKPIs()):
+            1. "Meetings" (#kpiMeetings) - count of unique meeting dates in filtered results
+            2. "Matching Votes" (#kpiVotes) - count of filtered vote records
+            3. "Pass Rate" (#kpiPassRate) - percentage of PASS outcomes in filtered results
+            4. "Total in Database" (#kpiFiltered) - total count of all votes (unfiltered)
+
+            Data source: computed from filteredVotes[] and allVotes[] arrays after filtering.
+            The first two cards use .kpi-card with a colored left border accent.
+        -->
+        <div class="row mb-4" id="kpiSection">
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card kpi-card meetings h-100">
+                    <div class="card-body text-center">
+                        <h3 class="text-primary mb-1" id="kpiMeetings">--</h3>
+                        <small class="text-muted">Meetings</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card kpi-card votes h-100">
+                    <div class="card-body text-center">
+                        <h3 class="text-success mb-1" id="kpiVotes">--</h3>
+                        <small class="text-muted">Matching Votes</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <h3 class="text-info mb-1" id="kpiPassRate">--%</h3>
+                        <small class="text-muted">Pass Rate</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <h3 class="text-secondary mb-1" id="kpiFiltered">--</h3>
+                        <small class="text-muted">Total in Database</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--
+            FILTER BAR
+            A card containing a single-row form with 5 filter controls + a clear button.
+            The form uses Bootstrap's row/col grid with g-2 gutter spacing and align-items-end
+            so labels and inputs align at their baselines.
+
+            Filter controls:
+            1. SEARCH INPUT (col-lg-3 col-md-6)
+               - Free-text keyword search with magnifying glass icon prefix
+               - Searches against vote title, topics array, and item_number fields
+               - Uses 300ms debounce on input event to avoid excessive re-filtering
+               - Does NOT submit the form; filtering is triggered via JS input event
+
+            2. TOPIC FILTER dropdown (col-lg-2 col-md-3 col-6)
+               - Populated dynamically by populateTopicDropdown() from the availableTopics[] array
+               - Uses a hardcoded list of standard topics (shared with votes.html and council pages):
+                 Appointments, Budget & Finance, Community Services, Contracts & Agreements,
+                 Economic Development, Grants, Housing, Infrastructure, Ordinances & Resolutions,
+                 Parks & Recreation, Planning & Development, Property & Real Estate, Public Safety,
+                 Public Works, Transportation, General
+               - Filters by checking if the selected topic exists in the vote's topics[] array
+
+            3. YEAR FILTER dropdown (col-lg-2 col-md-3 col-6)
+               - Populated dynamically by populateYearDropdown() from availableYears[]
+               - Years are extracted from allVotes[].meeting_date and sorted descending
+               - Filters by comparing the vote's meeting_date year to the selected year
+
+            4. MEETING TYPE FILTER dropdown (col-lg-2 col-md-3 col-6)
+               - Static options: "All Types", "Regular", "Special"
+               - Filters by exact match on vote.meeting_type field
+
+            5. OUTCOME FILTER dropdown (col-lg-2 col-md-3 col-6)
+               - Static options: "All Outcomes", "Passed" (value=PASS), "Failed" (value=FAIL)
+               - Filters by exact match on vote.outcome field
+
+            6. CLEAR BUTTON (col-lg-1 col-md-2 col-6)
+               - Resets all filter inputs to empty/default values
+               - Clears URL query parameters via window.history.pushState
+               - Re-applies filters to show all results
+
+            URL STATE MANAGEMENT:
+            - Filter selections are synced to URL query parameters (?q=&year=&topic=&type=&outcome=)
+            - On page load, applyFiltersFromURL() reads URL params and pre-fills the form
+            - On filter change, updateURL() writes current filter state to URL via pushState
+            - This enables shareable/bookmarkable filtered views
+        -->
+        <div class="card mb-4">
+            <div class="card-body filter-row">
+                <form id="searchForm" class="row g-2 align-items-end" role="search">
+                    <!-- Search input: free-text keyword filter with debounced input handler -->
+                    <div class="col-lg-3 col-md-6">
+                        <label for="searchInput" class="form-label small text-muted mb-1">Search</label>
+                        <div class="input-group">
+                            <span class="input-group-text" aria-hidden="true"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="searchInput"
+                                   placeholder="Keywords..."
+                                   autocomplete="off" aria-label="Search agenda items by keyword">
+                        </div>
+                    </div>
+                    <!-- Topic filter: dynamically populated from availableTopics[] array -->
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <label for="topicFilter" class="form-label small text-muted mb-1">Topic</label>
+                        <select class="form-select" id="topicFilter" aria-label="Filter by topic">
+                            <option value="">All Topics</option>
+                        </select>
+                    </div>
+                    <!-- Year filter: dynamically populated from years extracted from vote dates -->
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <label for="yearFilter" class="form-label small text-muted mb-1">Year</label>
+                        <select class="form-select" id="yearFilter" aria-label="Filter by year">
+                            <option value="">All Years</option>
+                        </select>
+                    </div>
+                    <!-- Meeting type filter: static options for regular/special meetings -->
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <label for="meetingTypeFilter" class="form-label small text-muted mb-1">Meeting Type</label>
+                        <select class="form-select" id="meetingTypeFilter" aria-label="Filter by meeting type">
+                            <option value="">All Types</option>
+                            <option value="regular">Regular</option>
+                            <option value="special">Special</option>
+                        </select>
+                    </div>
+                    <!-- Outcome filter: static options for passed/failed vote outcomes -->
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <label for="outcomeFilter" class="form-label small text-muted mb-1">Outcome</label>
+                        <select class="form-select" id="outcomeFilter" aria-label="Filter by outcome">
+                            <option value="">All Outcomes</option>
+                            <option value="PASS">Passed</option>
+                            <option value="FAIL">Failed</option>
+                        </select>
+                    </div>
+                    <!-- Clear button: resets all filters and URL state -->
+                    <div class="col-lg-1 col-md-2 col-6">
+                        <button type="button" class="btn btn-outline-secondary w-100" id="clearFilters" aria-label="Clear all filters">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!--
+            RESULTS TABLE
+            A responsive, sortable data table displaying filtered agenda items.
+            Wrapped in .table-responsive for horizontal scrolling on small screens.
+
+            SORTABLE COLUMNS (indicated by .sortable class and data-sort attribute):
+            Clicking a sortable column header toggles sort direction. The active column
+            gets an opaque up/down arrow icon; inactive columns show a dimmed bi-directional arrow.
+            Sort state is managed by sortColumn and sortDirection variables.
+
+            Column definitions (8 columns total):
+            1. Date (data-sort="meeting_date") - SORTABLE
+               - Displays formatted date via formatDate() helper
+               - Default sort column, default direction: descending (newest first)
+               - Sort comparison uses Date.getTime() for proper chronological ordering
+
+            2. Item (data-sort="item_number") - SORTABLE
+               - Agenda item number displayed as a light badge
+               - Sort comparison uses parseFloat() to handle numeric item numbers correctly
+               - Falls back to 0 for non-numeric values
+
+            3. Title (data-sort="title") - SORTABLE
+               - Links to vote-detail.html?id={vote.id} for the full vote detail view
+               - Truncated to 60 characters with ellipsis via truncate() helper
+               - Search keyword matches are highlighted with <mark> tags via highlightSearch()
+               - Sort comparison uses case-insensitive string comparison
+
+            4. Topic - NOT SORTABLE
+               - Displays up to 2 topics from the vote's topics[] array as a secondary badge
+               - Data source: vote.topics array (classified by topic classification system)
+
+            5. Type (data-sort="meeting_type") - SORTABLE
+               - Shows "Regular" or "Special" via capitalizeFirst() helper
+               - Sort comparison uses case-insensitive string comparison
+
+            6. Result (data-sort="outcome") - SORTABLE
+               - Color-coded badge via getOutcomeBadge():
+                 PASS = green (bg-success), FAIL = red (bg-danger),
+                 CONTINUED = yellow (bg-warning), REMOVED = gray (bg-secondary)
+               - Sort comparison uses case-insensitive string comparison
+
+            7. Documents - NOT SORTABLE
+               - Three icon buttons/badges for meeting documents: Agenda, Minutes, Video
+               - Data source: meetingsData{} lookup map, keyed by meeting_date
+               - meetingsData is built from CityVotesAPI.getMeetings() response
+
+               DOCUMENT ICON BADGES:
+               - When a document URL IS available (e.g., meeting.agenda_url exists):
+                 Renders as a clickable <a> button with btn-outline-secondary styling
+                 Opens the document URL in a new tab (target="_blank")
+               - When a document URL is NOT available (URL is null/undefined/empty):
+                 Renders as a non-clickable <span> badge with bg-light text-muted styling
+                 Shows the same icon but grayed out, with a "not available" tooltip
+               - Icons used: fa-file-alt (agenda), fa-clipboard-list (minutes), fa-video (video)
+               - Video link uses btn-outline-danger for visual distinction
+
+            8. Actions - NOT SORTABLE
+               - "View" button linking to vote-detail.html?id={vote.id}
+               - Uses btn-outline-primary with fa-eye icon
+               - Has aria-label="View vote details" for accessibility
+
+            EMPTY STATE:
+            When no results match the current filters, displays a centered message with
+            a search icon, explanatory text, and a "Clear Filters" button.
+
+            LOADING STATE:
+            On initial page load, displays a Bootstrap spinner with "Loading agenda items..." text.
+            This is replaced by displayResults() once data loading completes.
+        -->
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="resultsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" class="sortable" data-sort="meeting_date">
+                                Date <i class="fas fa-sort sort-icon"></i>
+                            </th>
+                            <th scope="col" class="sortable" data-sort="item_number">
+                                Item <i class="fas fa-sort sort-icon"></i>
+                            </th>
+                            <th scope="col" class="sortable" data-sort="title">
+                                Title <i class="fas fa-sort sort-icon"></i>
+                            </th>
+                            <th scope="col">
+                                Topic
+                            </th>
+                            <th scope="col" class="sortable" data-sort="meeting_type">
+                                Type <i class="fas fa-sort sort-icon"></i>
+                            </th>
+                            <th scope="col" class="sortable" data-sort="outcome">
+                                Result <i class="fas fa-sort sort-icon"></i>
+                            </th>
+                            <th scope="col">Documents</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody">
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">Loading agenda items...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!--
+            PAGINATION
+            Renders a Bootstrap pagination component below the results table.
+            Hidden by default (display: none) and shown only when totalPages > 1.
+
+            Structure:
+            - Previous button: disabled when on first page
+            - Page number links: shows first page, last page, and up to 2 pages on each side
+              of the current page. Gaps are shown as "..." (disabled page-item).
+            - Next button: disabled when on last page
+            - Each page link carries a data-offset attribute = pageIndex * pageSize
+            - Uses event delegation on #pagination for click handling
+            - On click: sets currentOffset, re-runs applyFilters(), scrolls to top
+
+            State variables:
+            - currentOffset: index into filteredVotes[] for the start of the current page
+            - pageSize: 25 items per page (constant)
+        -->
+        <nav class="mt-4" id="paginationNav" style="display: none;">
+            <ul class="pagination justify-content-center" id="pagination">
+            </ul>
+        </nav>
+    </main>
+
+    <!--
+        FOOTER
+        - Dark background footer with city branding
+        - Left column: site title with {CityName} and data source attribution
+        - Middle column: CTA link to contact page using text-city-accent color
+        - Right column: dynamic year range (#footerYears) computed from available data
+    -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>CityVotes - {CityName} Voting Transparency</h6>
+                    <p class="text-muted mb-0">Data sourced from official {CityName} city council meeting records.</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <p class="mb-0">Want a different city? <a href="contact.html" class="text-city-accent">Contact us</a></p>
+                </div>
+                <div class="col-md-2 text-end">
+                    <span class="text-muted" id="footerYears">-- Data</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle (includes Popper.js for dropdowns/tooltips) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <!--
+        STATIC DATA API
+        js/api.js provides the CityVotesAPI object with methods:
+        - CityVotesAPI.getVotes()    -> returns { votes: [...] }
+        - CityVotesAPI.getMeetings() -> returns { success: true, meetings: [...] }
+        The API loads data from static JSON files in the data/ directory.
+        Each vote object has: id, meeting_date, item_number, title, topics[], meeting_type, outcome
+        Each meeting object has: meeting_date, agenda_url, minutes_url, video_url
+    -->
+    <script src="js/api.js"></script>
+
+    <!--
+        MAIN APPLICATION SCRIPT
+
+        ARCHITECTURE OVERVIEW:
+        This script implements a client-side search and filter interface for council agenda items.
+        All data is loaded once on page load, then filtered/sorted/paginated entirely in the browser.
+
+        STATE VARIABLES:
+        - allVotes[]: complete array of all vote records from the API (never mutated after load)
+        - filteredVotes[]: subset of allVotes after applying current filters and sort
+        - availableYears[]: unique years extracted from vote dates, sorted descending
+        - availableTopics[]: hardcoded list of standard topic categories
+        - meetingsData{}: lookup map of meeting_date -> { agenda_url, minutes_url, video_url }
+        - currentOffset: pagination offset into filteredVotes (0-based)
+        - pageSize: 25 items per page (constant)
+        - sortColumn: currently sorted column's data-sort value (default: 'meeting_date')
+        - sortDirection: 'asc' or 'desc' (default: 'desc')
+
+        INITIALIZATION FLOW:
+        1. DOMContentLoaded fires
+        2. loadAllData() fetches votes and meetings in parallel via Promise.all
+        3. Builds meetingsData lookup, extracts years, sets up topic list
+        4. Populates year and topic dropdowns
+        5. Updates footer year range
+        6. Calls applyFilters() for initial display
+        7. setupEventListeners() wires up all interactive behaviors
+        8. applyFiltersFromURL() reads URL params and pre-fills filters
+
+        FILTER PIPELINE (applyFilters()):
+        1. Read current values from all filter inputs
+        2. Filter allVotes[] through year -> topic -> meetingType -> outcome -> search text
+        3. Sort filteredVotes[] by current sortColumn/sortDirection
+        4. Update KPI dashboard numbers
+        5. Render current page of results via displayResults()
+        6. Update pagination controls
+        7. Sync filter state to URL
+
+        SORT FUNCTIONALITY:
+        - Clicking a sortable <th> toggles direction if same column, or switches to new column
+        - Date sorting uses Date.getTime() for numeric comparison
+        - Item number sorting uses parseFloat() for numeric extraction
+        - All other columns use case-insensitive string comparison
+        - Sorting resets pagination to first page
+
+        URL STATE MANAGEMENT:
+        - Uses URLSearchParams and window.history.pushState (no page reload)
+        - Supported params: q (search), year, topic, type, outcome
+        - Empty params are omitted from the URL
+        - On load, URL params are read and applied to pre-fill filters
+        - Enables bookmarking and sharing of specific filter configurations
+    -->
+    <script>
+    // State
+    let allVotes = [];
+    let filteredVotes = [];
+    let availableYears = [];
+    let availableTopics = [];
+    let meetingsData = {}; // Map of meeting_date -> meeting info (agenda, minutes, video URLs)
+    let currentOffset = 0;
+    const pageSize = 25;
+    let sortColumn = 'meeting_date';
+    let sortDirection = 'desc';
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        await loadAllData();
+        setupEventListeners();
+        applyFiltersFromURL();
+    });
+
+    async function loadAllData() {
+        try {
+            // Load votes and meetings in parallel
+            const [votesData, meetingsResponse] = await Promise.all([
+                CityVotesAPI.getVotes(),
+                CityVotesAPI.getMeetings()
+            ]);
+
+            allVotes = votesData.votes || [];
+
+            // Build meetings lookup by date for document links
+            if (meetingsResponse.success) {
+                meetingsResponse.meetings.forEach(m => {
+                    meetingsData[m.meeting_date] = {
+                        agenda_url: m.agenda_url,
+                        minutes_url: m.minutes_url,
+                        video_url: m.video_url
+                    };
+                });
+            }
+
+            // Extract unique years
+            const years = new Set();
+            allVotes.forEach(vote => {
+                if (vote.meeting_date) {
+                    years.add(new Date(vote.meeting_date).getFullYear());
+                }
+            });
+
+            availableYears = Array.from(years).sort((a, b) => b - a);
+
+            // Use standard topic list (same as votes page and council member page)
+            availableTopics = [
+                'Appointments',
+                'Budget & Finance',
+                'Community Services',
+                'Contracts & Agreements',
+                'Economic Development',
+                'Grants',
+                'Housing',
+                'Infrastructure',
+                'Ordinances & Resolutions',
+                'Parks & Recreation',
+                'Planning & Development',
+                'Property & Real Estate',
+                'Public Safety',
+                'Public Works',
+                'Transportation',
+                'General'
+            ];
+
+            // Populate dropdowns
+            populateYearDropdown();
+            populateTopicDropdown();
+
+            // Update footer
+            if (availableYears.length > 0) {
+                const minYear = availableYears[availableYears.length - 1];
+                const maxYear = availableYears[0];
+                document.getElementById('footerYears').textContent =
+                    minYear === maxYear ? `${minYear} Data` : `${minYear}-${maxYear} Data`;
+            }
+
+            // Initial display
+            applyFilters();
+        } catch (error) {
+            console.error('Error loading data:', error);
+            document.getElementById('resultsBody').innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-5">
+                        <div class="alert alert-danger mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Failed to load data. Please refresh the page.
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    function populateYearDropdown() {
+        const select = document.getElementById('yearFilter');
+        availableYears.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            select.appendChild(option);
+        });
+    }
+
+    function populateTopicDropdown() {
+        const select = document.getElementById('topicFilter');
+        availableTopics.forEach(topic => {
+            const option = document.createElement('option');
+            option.value = topic;
+            option.textContent = topic;
+            select.appendChild(option);
+        });
+    }
+
+    function setupEventListeners() {
+        // Search input with debounce
+        let searchTimeout;
+        document.getElementById('searchInput').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                currentOffset = 0;
+                applyFilters();
+            }, 300);
+        });
+
+        // Filter changes
+        ['yearFilter', 'topicFilter', 'meetingTypeFilter', 'outcomeFilter'].forEach(id => {
+            document.getElementById(id).addEventListener('change', function() {
+                currentOffset = 0;
+                applyFilters();
+                updateURL();
+            });
+        });
+
+        // Clear filters
+        document.getElementById('clearFilters').addEventListener('click', function() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('yearFilter').value = '';
+            document.getElementById('topicFilter').value = '';
+            document.getElementById('meetingTypeFilter').value = '';
+            document.getElementById('outcomeFilter').value = '';
+            currentOffset = 0;
+            window.history.pushState({}, '', window.location.pathname);
+            applyFilters();
+        });
+
+        // Sortable columns
+        document.querySelectorAll('.sortable').forEach(th => {
+            th.addEventListener('click', function() {
+                const column = this.dataset.sort;
+                if (sortColumn === column) {
+                    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    sortColumn = column;
+                    sortDirection = column === 'meeting_date' ? 'desc' : 'asc';
+                }
+                currentOffset = 0;
+                updateSortIcons();
+                applyFilters();
+            });
+        });
+
+        // Pagination event delegation
+        document.getElementById('pagination').addEventListener('click', function(e) {
+            e.preventDefault();
+            const link = e.target.closest('a.page-link');
+            if (link && !link.closest('.disabled')) {
+                const offset = parseInt(link.getAttribute('data-offset'), 10);
+                if (!isNaN(offset) && offset >= 0) {
+                    currentOffset = offset;
+                    applyFilters();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }
+        });
+    }
+
+    function applyFiltersFromURL() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const q = urlParams.get('q');
+        const year = urlParams.get('year');
+        const topic = urlParams.get('topic');
+        const type = urlParams.get('type');
+        const outcome = urlParams.get('outcome');
+
+        if (q) document.getElementById('searchInput').value = q;
+        if (year) document.getElementById('yearFilter').value = year;
+        if (topic) document.getElementById('topicFilter').value = topic;
+        if (type) document.getElementById('meetingTypeFilter').value = type;
+        if (outcome) document.getElementById('outcomeFilter').value = outcome;
+    }
+
+    function updateURL() {
+        const params = new URLSearchParams();
+        const search = document.getElementById('searchInput').value.trim();
+        const year = document.getElementById('yearFilter').value;
+        const topic = document.getElementById('topicFilter').value;
+        const type = document.getElementById('meetingTypeFilter').value;
+        const outcome = document.getElementById('outcomeFilter').value;
+
+        if (search) params.set('q', search);
+        if (year) params.set('year', year);
+        if (topic) params.set('topic', topic);
+        if (type) params.set('type', type);
+        if (outcome) params.set('outcome', outcome);
+
+        const url = params.toString() ? `?${params.toString()}` : window.location.pathname;
+        window.history.pushState({}, '', url);
+    }
+
+    function applyFilters() {
+        const search = document.getElementById('searchInput').value.trim().toLowerCase();
+        const year = document.getElementById('yearFilter').value;
+        const topic = document.getElementById('topicFilter').value;
+        const meetingType = document.getElementById('meetingTypeFilter').value;
+        const outcome = document.getElementById('outcomeFilter').value;
+
+        // Filter votes
+        filteredVotes = allVotes.filter(vote => {
+            // Year filter
+            if (year) {
+                const voteYear = new Date(vote.meeting_date).getFullYear();
+                if (voteYear !== parseInt(year)) return false;
+            }
+
+            // Topic filter - check if selected topic is in vote's topics array
+            if (topic) {
+                const voteTopics = vote.topics || [];
+                if (!voteTopics.includes(topic)) return false;
+            }
+
+            // Meeting type filter
+            if (meetingType && vote.meeting_type !== meetingType) return false;
+
+            // Outcome filter
+            if (outcome && vote.outcome !== outcome) return false;
+
+            // Search filter
+            if (search) {
+                const title = (vote.title || '').toLowerCase();
+                const topicsStr = (vote.topics || []).join(' ').toLowerCase();
+                const itemNumber = (vote.item_number || '').toLowerCase();
+                if (!title.includes(search) && !topicsStr.includes(search) && !itemNumber.includes(search)) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
+        // Sort
+        filteredVotes.sort((a, b) => {
+            let aVal = a[sortColumn] || '';
+            let bVal = b[sortColumn] || '';
+
+            if (sortColumn === 'meeting_date') {
+                aVal = new Date(aVal).getTime();
+                bVal = new Date(bVal).getTime();
+            } else if (sortColumn === 'item_number') {
+                // Extract numeric part for proper sorting
+                aVal = parseFloat(aVal) || 0;
+                bVal = parseFloat(bVal) || 0;
+            } else {
+                aVal = String(aVal).toLowerCase();
+                bVal = String(bVal).toLowerCase();
+            }
+
+            if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+            if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        // Update KPIs
+        updateKPIs();
+
+        // Display results
+        displayResults();
+
+        // Update pagination
+        updatePagination();
+
+        // Update URL
+        updateURL();
+    }
+
+    function updateKPIs() {
+        // Count unique meetings in filtered results
+        const meetings = new Set(filteredVotes.map(v => v.meeting_date));
+        document.getElementById('kpiMeetings').textContent = meetings.size.toLocaleString();
+        document.getElementById('kpiVotes').textContent = filteredVotes.length.toLocaleString();
+
+        // Pass rate
+        const passed = filteredVotes.filter(v => v.outcome === 'PASS').length;
+        const passRate = filteredVotes.length > 0 ? ((passed / filteredVotes.length) * 100).toFixed(1) : 0;
+        document.getElementById('kpiPassRate').textContent = passRate + '%';
+
+        // Total in database for context
+        document.getElementById('kpiFiltered').textContent = allVotes.length.toLocaleString();
+    }
+
+    function updateSortIcons() {
+        document.querySelectorAll('.sortable').forEach(th => {
+            const icon = th.querySelector('.sort-icon');
+            if (th.dataset.sort === sortColumn) {
+                th.classList.add('active');
+                icon.className = `fas fa-sort-${sortDirection === 'asc' ? 'up' : 'down'} sort-icon`;
+            } else {
+                th.classList.remove('active');
+                icon.className = 'fas fa-sort sort-icon';
+            }
+        });
+    }
+
+    function displayResults() {
+        const tbody = document.getElementById('resultsBody');
+        const pageVotes = filteredVotes.slice(currentOffset, currentOffset + pageSize);
+
+        if (pageVotes.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center py-5 text-muted">
+                        <i class="fas fa-search fa-3x mb-3"></i>
+                        <p>No agenda items match your filters</p>
+                        <button class="btn btn-outline-primary btn-sm" onclick="document.getElementById('clearFilters').click()">
+                            Clear Filters
+                        </button>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        const search = document.getElementById('searchInput').value.trim();
+
+        tbody.innerHTML = pageVotes.map(vote => {
+            const meeting = meetingsData[vote.meeting_date] || {};
+            return `
+            <tr>
+                <td><small>${formatDate(vote.meeting_date)}</small></td>
+                <td><span class="badge bg-light text-dark">${escapeHtml(vote.item_number || '-')}</span></td>
+                <td>
+                    <a href="vote-detail.html?id=${vote.id}" class="text-decoration-none">
+                        ${highlightSearch(truncate(vote.title, 60), search)}
+                    </a>
+                </td>
+                <td><span class="badge bg-secondary">${escapeHtml((vote.topics || []).slice(0, 2).join(', ') || '-')}</span></td>
+                <td><span class="text-muted small">${capitalizeFirst(vote.meeting_type || 'regular')}</span></td>
+                <td>${getOutcomeBadge(vote.outcome)}</td>
+                <td>
+                    ${meeting.agenda_url ? `<a href="${meeting.agenda_url}" target="_blank" class="btn btn-sm btn-outline-secondary me-1" title="View Agenda"><i class="fas fa-file-alt"></i></a>` : '<span class="badge bg-light text-muted me-1" title="Agenda not available"><i class="fas fa-file-alt"></i></span>'}
+                    ${meeting.minutes_url ? `<a href="${meeting.minutes_url}" target="_blank" class="btn btn-sm btn-outline-secondary me-1" title="View Minutes"><i class="fas fa-clipboard-list"></i></a>` : '<span class="badge bg-light text-muted me-1" title="Minutes not available"><i class="fas fa-clipboard-list"></i></span>'}
+                    ${meeting.video_url ? `<a href="${meeting.video_url}" target="_blank" class="btn btn-sm btn-outline-danger" title="Watch Video"><i class="fas fa-video"></i></a>` : '<span class="badge bg-light text-muted" title="Video not available"><i class="fas fa-video"></i></span>'}
+                </td>
+                <td>
+                    <a href="vote-detail.html?id=${vote.id}" class="btn btn-sm btn-outline-primary" aria-label="View vote details">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                </td>
+            </tr>
+        `}).join('');
+    }
+
+    function updatePagination() {
+        const total = filteredVotes.length;
+        const totalPages = Math.ceil(total / pageSize);
+        const currentPage = Math.floor(currentOffset / pageSize);
+
+        if (totalPages <= 1) {
+            document.getElementById('paginationNav').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('paginationNav').style.display = 'block';
+        const pagination = document.getElementById('pagination');
+        pagination.innerHTML = '';
+
+        // Previous button
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${currentPage === 0 ? 'disabled' : ''}`;
+        const prevLink = document.createElement('a');
+        prevLink.className = 'page-link';
+        prevLink.href = '#';
+        prevLink.textContent = 'Previous';
+        prevLink.setAttribute('data-offset', (currentPage - 1) * pageSize);
+        prevLi.appendChild(prevLink);
+        pagination.appendChild(prevLi);
+
+        // Page numbers
+        for (let i = 0; i < totalPages; i++) {
+            if (i === 0 || i === totalPages - 1 || Math.abs(i - currentPage) <= 2) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                const link = document.createElement('a');
+                link.className = 'page-link';
+                link.href = '#';
+                link.textContent = i + 1;
+                link.setAttribute('data-offset', i * pageSize);
+                li.appendChild(link);
+                pagination.appendChild(li);
+            } else if (Math.abs(i - currentPage) === 3) {
+                const li = document.createElement('li');
+                li.className = 'page-item disabled';
+                const span = document.createElement('span');
+                span.className = 'page-link';
+                span.textContent = '...';
+                li.appendChild(span);
+                pagination.appendChild(li);
+            }
+        }
+
+        // Next button
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${currentPage === totalPages - 1 ? 'disabled' : ''}`;
+        const nextLink = document.createElement('a');
+        nextLink.className = 'page-link';
+        nextLink.href = '#';
+        nextLink.textContent = 'Next';
+        nextLink.setAttribute('data-offset', (currentPage + 1) * pageSize);
+        nextLi.appendChild(nextLink);
+        pagination.appendChild(nextLi);
+    }
+
+    // Helper functions
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function truncate(str, len) {
+        if (!str) return '';
+        return str.length > len ? str.substring(0, len) + '...' : str;
+    }
+
+    function highlightSearch(text, query) {
+        if (!text || !query) return escapeHtml(text) || '';
+        const escaped = escapeHtml(text);
+        const escapedQuery = escapeHtml(query);
+        const regex = new RegExp(`(${escapeRegex(escapedQuery)})`, 'gi');
+        return escaped.replace(regex, '<mark>$1</mark>');
+    }
+
+    function escapeRegex(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function capitalizeFirst(str) {
+        if (!str) return '';
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function getOutcomeBadge(outcome) {
+        const badges = {
+            'PASS': '<span class="badge bg-success" role="status">Passed</span>',
+            'FAIL': '<span class="badge bg-danger" role="status">Failed</span>',
+            'CONTINUED': '<span class="badge bg-warning text-dark" role="status">Continued</span>',
+            'REMOVED': '<span class="badge bg-secondary" role="status">Removed</span>'
+        };
+        return badges[outcome] || `<span class="badge bg-light text-dark" role="status">${escapeHtml(outcome || 'Unknown')}</span>`;
+    }
+    </script>
+</body>
+</html>

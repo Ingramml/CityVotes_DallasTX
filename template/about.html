@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!--
+    ================================================================
+    TEMPLATE PLACEHOLDERS - Replace before deploying:
+      {CityName}       - Full city name (e.g. "Santa Ana")
+      {DateRange}      - Data coverage date range (e.g. "January 2022 - December 2024")
+      {TotalVotes}     - Total number of recorded votes (e.g. "1,244")
+      {TotalMeetings}  - Total number of council meetings (e.g. "75")
+      {TotalMembers}   - Total current and former members (e.g. "11")
+      {MeetingSchedule}- Typical meeting schedule (e.g. "first and third Tuesday of each month")
+      {MeetingTime}    - Typical meeting time (e.g. "5:00 PM")
+    ================================================================
+    -->
+
+    <!-- REPLACE: {CityName} -->
+    <title>About - CityVotes {CityName}</title>
+    <meta name="description" content="Learn about CityVotes, how it works, and how to use it to track {CityName} City Council voting records.">
+
+    <!--
+    ================================================================
+    OPEN GRAPH / SOCIAL SHARING META TAGS
+    REPLACE: {CityName} in og:title and og:description
+    ================================================================
+    -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="About - CityVotes {CityName}">
+    <meta property="og:description" content="Learn about CityVotes, how it works, and how to use it to track {CityName} City Council voting records.">
+    <meta property="og:site_name" content="CityVotes">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="About - CityVotes {CityName}">
+    <meta name="twitter:description" content="Learn about CityVotes, how it works, and how to use it to track {CityName} City Council voting records.">
+
+    <!--
+    ================================================================
+    SCHEMA.ORG STRUCTURED DATA (JSON-LD)
+    FAQPage schema for search engine rich results.
+    REPLACE: {CityName}
+    ================================================================
+    -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "What is CityVotes?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "CityVotes is a civic transparency tool that makes {CityName} City Council voting records accessible and easy to understand."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Where does the data come from?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "All data is sourced from official {CityName} City Council meeting minutes and voting records."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How often is the data updated?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Data is updated after each city council meeting, typically within 1-2 weeks of the meeting date."
+                }
+            }
+        ]
+    }
+    </script>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- THEME: City-specific colors and styles -->
+    <link href="css/theme.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Skip Navigation (accessibility) -->
+    <a href="#main-content" class="visually-hidden-focusable skip-link">Skip to main content</a>
+
+    <!--
+    ================================================================
+    NAVIGATION BAR
+    Shared across all pages. Copy this block to every page.
+    REPLACE: {CityName}, active nav-link
+    About/Help page: no nav-link is marked active
+    ================================================================
+    -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-city-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-vote-yea me-2"></i>CityVotes
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="council.html">
+                            <i class="fas fa-users me-1"></i>Council
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="meetings.html">
+                            <i class="fas fa-calendar me-1"></i>Meetings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="votes.html">
+                            <i class="fas fa-check-square me-1"></i>Votes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="agenda-search.html">
+                            <i class="fas fa-search me-1"></i>Search
+                        </a>
+                    </li>
+                </ul>
+                <a href="about.html" class="btn btn-outline-light btn-sm me-3">
+                    <i class="fas fa-question-circle me-1"></i>Help
+                </a>
+                <!-- REPLACE: {CityName} -->
+                <span class="navbar-text text-city-accent">
+                    <i class="fas fa-map-marker-alt me-1"></i>{CityName}
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <!--
+    ================================================================
+    PAGE HEADER
+    Simple header with icon, title, and subtitle
+    ================================================================
+    -->
+    <header class="bg-light py-4">
+        <div class="container">
+            <h1><i class="fas fa-info-circle me-2"></i>About CityVotes</h1>
+            <p class="text-muted mb-0">Learn how to use this transparency tool</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content" class="container my-4">
+
+        <!--
+        ================================================================
+        ABOUT SECTION
+        Overview of what CityVotes is and what users can do with it.
+        REPLACE: {CityName}
+        ================================================================
+        -->
+        <section class="mb-5">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title h4 mb-3"><i class="fas fa-landmark me-2 text-city-primary"></i>What is CityVotes?</h2>
+                    <p>CityVotes is a civic transparency tool that makes it easy to track and understand how your {CityName} City Council members vote on issues that affect your community.</p>
+                    <p>We compile voting records from official city council meeting minutes and present them in a searchable, user-friendly format so you can:</p>
+                    <ul>
+                        <li>See how individual council members voted on specific issues</li>
+                        <li>Track voting patterns and trends over time</li>
+                        <li>Search for votes on topics you care about</li>
+                        <li>Compare how different council members align on issues</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!--
+        ================================================================
+        HOW TO USE SECTION
+        4-card grid explaining main features.
+        Layout: 2 columns (col-md-6)
+        ================================================================
+        -->
+        <section class="mb-5">
+            <h2 class="h4 mb-3"><i class="fas fa-compass me-2 text-city-primary"></i>How to Use CityVotes</h2>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h3 class="h5"><i class="fas fa-users text-primary me-2"></i>Council Members</h3>
+                            <p class="mb-0">View profiles of current and former council members, including their voting statistics, participation rates, and complete voting history.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h3 class="h5"><i class="fas fa-calendar text-primary me-2"></i>Meetings</h3>
+                            <p class="mb-0">Browse past city council meetings to see what was discussed and voted on. Each meeting shows all agenda items and their outcomes.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h3 class="h5"><i class="fas fa-check-square text-primary me-2"></i>Votes</h3>
+                            <p class="mb-0">Search and filter all recorded votes by year, outcome, or keyword. See the full breakdown of who voted yes, no, or abstained.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h3 class="h5"><i class="fas fa-handshake text-primary me-2"></i>Alignment</h3>
+                            <p class="mb-0">Discover which council members vote together most often and which tend to disagree, helping you understand voting blocs and coalitions.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!--
+        ================================================================
+        GLOSSARY OF VOTING TERMS
+        Definition list of common civic voting terminology.
+        Generic content - no city-specific replacements needed.
+        ================================================================
+        -->
+        <section class="mb-5">
+            <h2 class="h4 mb-3"><i class="fas fa-book me-2 text-city-primary"></i>Glossary of Voting Terms</h2>
+            <div class="card">
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-3">Aye / Yes</dt>
+                        <dd class="col-sm-9">A vote in favor of the motion or item being considered.</dd>
+
+                        <dt class="col-sm-3">Nay / No</dt>
+                        <dd class="col-sm-9">A vote against the motion or item being considered.</dd>
+
+                        <dt class="col-sm-3">Abstain</dt>
+                        <dd class="col-sm-9">A council member chooses not to vote either way, often due to a potential conflict of interest or insufficient information.</dd>
+
+                        <dt class="col-sm-3">Absent</dt>
+                        <dd class="col-sm-9">The council member was not present for the vote.</dd>
+
+                        <dt class="col-sm-3">Recusal</dt>
+                        <dd class="col-sm-9">A council member formally removes themselves from voting due to a conflict of interest.</dd>
+
+                        <dt class="col-sm-3">Passed</dt>
+                        <dd class="col-sm-9">The motion received enough "Aye" votes to be approved.</dd>
+
+                        <dt class="col-sm-3">Failed</dt>
+                        <dd class="col-sm-9">The motion did not receive enough "Aye" votes and was rejected.</dd>
+
+                        <dt class="col-sm-3">Consent Calendar</dt>
+                        <dd class="col-sm-9">Routine items grouped together for a single vote, typically non-controversial matters.</dd>
+
+                        <dt class="col-sm-3">Public Hearing</dt>
+                        <dd class="col-sm-9">An agenda item where community members can provide input before the council votes.</dd>
+
+                        <dt class="col-sm-3">Quorum</dt>
+                        <dd class="col-sm-9">The minimum number of council members who must be present for official business to be conducted (typically a majority).</dd>
+
+                        <dt class="col-sm-3">Unanimous</dt>
+                        <dd class="col-sm-9 mb-0">When all voting members vote the same way (all Aye or all Nay).</dd>
+                    </dl>
+                </div>
+            </div>
+        </section>
+
+        <!--
+        ================================================================
+        FREQUENTLY ASKED QUESTIONS
+        Bootstrap accordion with 7 FAQ items.
+        REPLACE: {CityName}, {MeetingSchedule}, {MeetingTime}
+        FAQ 7: Replace contact link with city-specific URL
+        ================================================================
+        -->
+        <section class="mb-5">
+            <h2 class="h4 mb-3"><i class="fas fa-question-circle me-2 text-city-primary"></i>Frequently Asked Questions</h2>
+            <div class="accordion" id="faqAccordion">
+                <div class="accordion-item">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                            Where does the voting data come from?
+                        </button>
+                    </h3>
+                    <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            All voting data is sourced from official {CityName} City Council meeting minutes and agendas, which are public records. We compile this information to make it more accessible and searchable.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                            How often is the data updated?
+                        </button>
+                    </h3>
+                    <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Currently, the database includes voting records covering {DateRange}. Updates are made periodically as new meeting minutes become available. The City Council typically meets on the {MeetingSchedule}.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                            What does "Participation Rate" mean?
+                        </button>
+                    </h3>
+                    <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            The participation rate shows the percentage of votes where a council member was present and voted (Aye, Nay, or Abstain). It excludes times when they were absent or recused. A high participation rate indicates consistent attendance and engagement.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                            What is "Voting Alignment"?
+                        </button>
+                    </h3>
+                    <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Voting alignment measures how often two council members vote the same way. A high alignment percentage (e.g., 95%) means they usually agree, while a low percentage means they often vote differently. This can help identify voting blocs or coalitions on the council.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                            Why are some vote counts showing 0-0-0?
+                        </button>
+                    </h3>
+                    <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Some items pass by "unanimous consent" or "voice vote" where individual votes aren't recorded. In these cases, the tally may show 0-0-0 even though the item passed. This is common for non-controversial consent calendar items.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+                            Can I attend city council meetings?
+                        </button>
+                    </h3>
+                    <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            <!-- REPLACE: {CityName}, {MeetingSchedule}, {MeetingTime} with city-specific details -->
+                            Yes! {CityName} City Council meetings are open to the public. They typically meet at City Hall on the {MeetingSchedule} at {MeetingTime}. You can also watch meetings live or recorded on the city's website.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq7">
+                            How can I contact my council member?
+                        </button>
+                    </h3>
+                    <div id="faq7" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            <!-- REPLACE: Link to official city council page -->
+                            Contact information for {CityName} City Council members is available on the official city website. You can reach out to them about issues you care about or to share your feedback on upcoming votes.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!--
+        ================================================================
+        DATA SOURCES SECTION
+        Official source links and data coverage stats.
+        REPLACE: {CityName}, {DateRange}, {TotalVotes}, {TotalMeetings}, {TotalMembers}
+        REPLACE: Add city-specific official source URLs
+        ================================================================
+        -->
+        <section class="mb-5">
+            <h2 class="h4 mb-3"><i class="fas fa-database me-2 text-city-primary"></i>Data Sources</h2>
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="h6">Official Sources</h3>
+                    <ul>
+                        <!-- REPLACE: Link to official city council page -->
+                        <li><a href="#" target="_blank" rel="noopener">{CityName} City Council Official Page</a></li>
+                        <!-- REPLACE: Link to official meeting agendas and minutes page -->
+                        <li><a href="#" target="_blank" rel="noopener">Meeting Agendas and Minutes</a></li>
+                    </ul>
+
+                    <h3 class="h6 mt-4">Data Coverage</h3>
+                    <ul class="mb-0">
+                        <!-- REPLACE: {DateRange}, {TotalVotes}, {TotalMeetings}, {TotalMembers} -->
+                        <li><strong>Date Range:</strong> {DateRange}</li>
+                        <li><strong>Total Votes:</strong> {TotalVotes} recorded votes</li>
+                        <li><strong>Total Meetings:</strong> {TotalMeetings} city council meetings</li>
+                        <li><strong>Council Members:</strong> {TotalMembers} current and former members</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Back to Home -->
+        <div class="text-center">
+            <a href="index.html" class="btn btn-primary">
+                <i class="fas fa-home me-2"></i>Back to Home
+            </a>
+            <a href="contact.html" class="btn btn-outline-primary ms-2">
+                <i class="fas fa-envelope me-2"></i>Contact Us
+            </a>
+        </div>
+    </main>
+
+    <!--
+    ================================================================
+    FOOTER
+    Shared across all pages. Copy this block to every page.
+    REPLACE: {CityName}
+    ================================================================
+    -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <!-- REPLACE: {CityName} -->
+                    <h6>CityVotes - {CityName} Voting Transparency</h6>
+                    <p class="text-muted mb-0">Data sourced from official {CityName} city council meeting records.</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <p class="mb-0">Want a different city? <a href="contact.html" class="text-city-accent">Contact us</a></p>
+                </div>
+                <div class="col-md-2 text-end">
+                    <span class="text-muted">-- Data</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
