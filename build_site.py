@@ -27,6 +27,27 @@ CSV_DIR = BASE_DIR / "Dallas-TX"
 FRONTEND_DIR = BASE_DIR / "frontend"
 DATA_DIR = FRONTEND_DIR / "data"
 
+# Year filter: only process CSVs within this range (inclusive).
+# Set to None to process all years.
+YEAR_RANGE = (2022, 2023)
+
+
+def _filter_csv_files(files):
+    """Filter CSV file list to only include years within YEAR_RANGE."""
+    if YEAR_RANGE is None:
+        return files
+    filtered = []
+    for f in files:
+        # Extract year from filename like Dallas-TX-2022-Q1-Votes.csv
+        match = re.search(r"-(\d{4})-Q\d", f.name)
+        if match:
+            year = int(match.group(1))
+            if YEAR_RANGE[0] <= year <= YEAR_RANGE[1]:
+                filtered.append(f)
+        else:
+            filtered.append(f)  # Keep files that don't match the pattern
+    return filtered
+
 # ---------------------------------------------------------------------------
 # Name normalization: merge variant spellings into canonical names
 # ---------------------------------------------------------------------------
@@ -311,6 +332,8 @@ class DallasSiteBuilder:
         print("=" * 60)
         print("Dallas City Council - Building Website Data")
         print("=" * 60)
+        if YEAR_RANGE:
+            print(f"  Year filter active: {YEAR_RANGE[0]}-{YEAR_RANGE[1]}")
 
         self._load_members()
         self._load_current_members()
@@ -348,7 +371,7 @@ class DallasSiteBuilder:
     def _load_members(self):
         """Build master member list from all Persons CSVs."""
         print("\nLoading council member roster...")
-        persons_files = sorted(CSV_DIR.glob("*-Persons.csv"))
+        persons_files = _filter_csv_files(sorted(CSV_DIR.glob("*-Persons.csv")))
 
         for f in persons_files:
             with open(f, "r", encoding="utf-8") as fh:
@@ -417,7 +440,7 @@ class DallasSiteBuilder:
 
     def _load_current_members(self):
         """Load the most recent Persons CSV to determine current members."""
-        persons_files = sorted(CSV_DIR.glob("*-Persons.csv"))
+        persons_files = _filter_csv_files(sorted(CSV_DIR.glob("*-Persons.csv")))
         if not persons_files:
             self._current_members = set()
             return
@@ -436,7 +459,7 @@ class DallasSiteBuilder:
     def _load_all_csv_data(self):
         """Load all Votes CSVs and process into meetings, votes, and items."""
         print("\nLoading vote data from all quarterly CSVs...")
-        votes_files = sorted(CSV_DIR.glob("*-Votes.csv"))
+        votes_files = _filter_csv_files(sorted(CSV_DIR.glob("*-Votes.csv")))
 
         # Track meetings by (event_id, date) to deduplicate
         meetings_by_key = {}
